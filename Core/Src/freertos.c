@@ -33,6 +33,7 @@
 #include "data-format.h"
 #include "light-sensor.h"
 #include <stdbool.h>
+#include "flash.h"
 
 /* USER CODE END Includes */
 
@@ -206,7 +207,7 @@ void entryProducer(void* argument)
   {
     err = osSemaphoreAcquire(rxDoneSemaphoreHandle, portMAX_DELAY);
     if (!err) {
-      
+
       STM_LOGD("Producer", "Get semaphore ok");
 
       if (LoRaGetITFlag(PAYLOAD_CRC_ERROR_MskPos) == 1)

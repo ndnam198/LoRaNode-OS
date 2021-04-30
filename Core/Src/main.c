@@ -104,6 +104,7 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   vLoraInit();
+  STM_LOGV("Main", "NodeID: %d", thisNode.nodeID);
   /* USER CODE END 2 */
 
   /* Init scheduler */
