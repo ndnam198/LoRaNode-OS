@@ -51,28 +51,6 @@ uint8_t ucSpi1Read(uint8_t ucAddress)
   return ucData;
 }
 
-// /**
-//   * @brief Read data of FIFO
-//   * @param ucData: Value needed into FIFO
-//   * @retval Value of FIFO
-//   */
-// uint8_t ucReadFifo(void)
-// {
-//     uint8_t ucData = 0;
-//     ucData = ucSpi1Read(RegFifo);
-//     return ucData;
-// }
-
-// /**
-//   * @brief Writre data into FIFO
-//   * @param ucData: Value needed write into FIFO
-//   * @retval None
-//   */
-// void vWriteFifo(uint8_t ucData)
-// {
-//     vSpi1Write(RegFifo, ucData);
-// }
-
 /**
   * @brief Mode Initialization LoraTM or FSK/OOK
   * @param ucMode: Value of mode: LoraTM if 1, FSK/OOK if 0
@@ -308,28 +286,6 @@ void vLnaBoostHfInit(uint8_t ucLnaBoostHf)
   }
 }
 
-// /**
-//   * @brief Read Address Pointer in FIFO Data Buffer
-//   * @param None
-//   * @retval Address Pointer Value
-//   */
-// uint8_t ucFifoAddrPtrRead(void)
-// {
-//     uint8_t ucData = 0;
-//     ucData = ucSpi1Read(RegFifoAddrPtr);
-//     return ucData;
-// }
-
-// /**
-//   * @brief Write Address Pointer in FIFO Data Buffer
-//   * @param ucFifoAddrPtr: FIFO Address Pointer Value
-//   * @retval None
-//   */
-// void vFifoAddrPtrWrite(uint8_t ucFifoAddrPtr)
-// {
-//     vSpi1Write(RegFifoAddrPtr, ucFifoAddrPtr);
-// }
-
 /**
   * @brief Base address in FIFO data buffer for TX modulator Initialization
   * @param ucFifoTxBaseAddr: Base Address Value for Tx
@@ -361,102 +317,6 @@ uint8_t ucFifoRxCurrentAddrRead(void)
   ucData = ucSpi1Read(RegFifoRxCurrentAddr);
   return ucData;
 }
-
-// void vRxTimeoutMaskInit(uint8_t ucRxTimeoutMask)
-// {
-//     uint8_t ucData = 0;
-//     ucData = ucSpi1Read(RegIrqFlagsMask);
-//     ucData &= 0x7F;
-//     if(ucRxTimeoutMask == 0u || ucRxTimeoutMask == 1u)
-//     {
-//         ucData |= (ucRxTimeoutMask << 7);
-//         vSpi1Write(RegIrqFlagsMask, ucData);
-//     }
-// }
-
-// void vRxDoneMaskInit(uint8_t ucRxDoneMask)
-// {
-//     uint8_t ucData = 0;
-//     ucData = ucSpi1Read(RegIrqFlagsMask);
-//     ucData &= 0xBF;
-//     if(ucRxDoneMask == 0u || ucRxDoneMask == 1u)
-//     {
-//         ucData |= (ucRxDoneMask << 6);
-//         vSpi1Write(RegIrqFlagsMask, ucData);
-//     }
-// }
-
-// void vPayloadCrcErrorMaskInit(uint8_t ucPayloadCrcErrorMask)
-// {
-//     uint8_t ucData = 0;
-//     ucData = ucSpi1Read(RegIrqFlagsMask);
-//     ucData &= 0xDF;
-//     if(ucPayloadCrcErrorMask == 0u || ucPayloadCrcErrorMask == 1u)
-//     {
-//         ucData |= (ucPayloadCrcErrorMask << 5);
-//         vSpi1Write(RegIrqFlagsMask, ucData);
-//     }
-// }
-
-// void vValidHeaderMaskInit(uint8_t ucValidHeaderMask)
-// {
-//     uint8_t ucData = 0;
-//     ucData = ucSpi1Read(RegIrqFlagsMask);
-//     ucData &= 0xEF;
-//     if(ucValidHeaderMask == 0u || ucValidHeaderMask == 1u)
-//     {
-//         ucData |= (ucValidHeaderMask << 4);
-//         vSpi1Write(RegIrqFlagsMask, ucData);
-//     }
-// }
-
-// void vTxDoneMaskInit(uint8_t ucTxDoneMask)
-// {
-//     uint8_t ucData = 0;
-//     ucData = ucSpi1Read(RegIrqFlagsMask);
-//     ucData &= 0xF7;
-//     if(ucTxDoneMask == 0u || ucTxDoneMask == 1u)
-//     {
-//         ucData |= (ucTxDoneMask << 3);
-//         vSpi1Write(RegIrqFlagsMask, ucData);
-//     }
-// }
-
-// void vCadDoneMaskInit(uint8_t ucCadDoneMask)
-// {
-//     uint8_t ucData = 0;
-//     ucData = ucSpi1Read(RegIrqFlagsMask);
-//     ucData &= 0xFB;
-//     if(ucCadDoneMask == 0u || ucCadDoneMask == 1u)
-//     {
-//         ucData |= (ucCadDoneMask << 2);
-//         vSpi1Write(RegIrqFlagsMask, ucData);
-//     }
-// }
-
-// void vFhssChangeChannelMaskInit(uint8_t ucFhssChangeChannelMask)
-// {
-//     uint8_t ucData = 0;
-//     ucData = ucSpi1Read(RegIrqFlagsMask);
-//     ucData &= 0xFD;
-//     if(ucFhssChangeChannelMask == 0u || ucFhssChangeChannelMask == 1u)
-//     {
-//         ucData |= (ucFhssChangeChannelMask << 1);
-//         vSpi1Write(RegIrqFlagsMask, ucData);
-//     }
-// }
-
-// void vCadDetectedMaskInit(uint8_t ucCadDetectedMask)
-// {
-//     uint8_t ucData = 0;
-//     ucData = ucSpi1Read(RegIrqFlagsMask);
-//     ucData &= 0xFE;
-//     if(ucCadDetectedMask == 0u || ucCadDetectedMask == 1u)
-//     {
-//         ucData |= ucCadDetectedMask;
-//         vSpi1Write(RegIrqFlagsMask, ucData);
-//     }
-// }
 
 /**
   * @brief Interrupt Mask Initialization
@@ -1347,294 +1207,10 @@ void vLoraInit(void)
   LORA_GET_REGISTER(RegVersion);
 
   /* Reset Rx Pointer */
-  STM_LOGD("LoRa", "Reset RxPointer");
   vModeInit(STDBY_MODE);
   vModeInit(RXCONTINUOUS_MODE);
-  // STM_LOGD("lora.c", "---------- LoraInit Finish ----------");
 }
 
-/**
-  * @brief Transmit Data into FIFO
-  * @param pcTxBuffer: Data Address Transmit
-  * @param bRepeat: Tx Single or Rx Coninuous
-  * @retval None
-  */
-  // void vLoraTransmit(uint8_t *pcTxBuffer, bool bRepeat)
-  // {
-  //   uint8_t ucData = 0;
-  //   uint8_t i = 0;
-  //   uint8_t ucIrqStatus = 0;
-
-  //   STM_LOGD("lora.c", "---------- Start Transmit ----------");
-
-  //   vModeInit(STDBY_MODE); /* Init Module Lora into Standby Mode */
-  //   ucData = ucSpi1Read(RegOpMode);
-  //   printf("Init Standby Mode: RegOpMode = 0x%XH\r\n", ucData);
-
-  //   vSpi1Write(RegFifoAddrPtr, FIFO_TX_BASE_ADDR); /* Set FifoPtrAddr to FifoTxPtrBase */
-  //   ucData = ucSpi1Read(RegFifoAddrPtr);
-  //   printf("Set Write Base Address to FifoAddrPtr: RegFifoAddrPtr = 0x%XH\r\n", ucData);
-
-  //   do
-  //   {
-  //     for (i = 0u; i < PAYLOAD_LENGTH; i++)
-  //     {
-  //       ucData = *(pcTxBuffer + i);
-  //       vSpi1Write(RegFifo, *(pcTxBuffer + i));
-  //     }
-  //     ucData = ucSpi1Read(RegIrqFlags);
-  //     printf("Check TxDone Flag Before Start Transmit: RegIrqFlags = 0x%XH\r\n", ucData);
-
-  //     vModeInit(TX_MODE); /* Init Module Lora into TX Mode */
-  //     ucData = ucSpi1Read(RegOpMode);
-  //     printf("Init Tx Mode: RegOpMode = 0x%XH\r\n", ucData);
-
-  //     ucIrqStatus = ucSpi1Read(RegIrqFlags);
-  //     printf("Check TxDone Flag: RegIrqFlags = 0x%XH\r\n", ucIrqStatus);
-
-  //     while ((ucSpi1Read(RegIrqFlags) & 0x08u) == 0u)
-  //       ; /* Wait for TxDone set */
-
-  //     ucData = ucSpi1Read(RegOpMode);
-  //     printf("Check Automatic Mode change STANDBY: RegOpMode = 0x%XH\r\n", ucData);
-
-  //     if ((ucData & 0x07u) == 1u) /* If Automatic Mode change STANDBY */
-  //     {
-  //       printf("Automatic Mode change STANDBY from TX Continuous Mode\r\n");
-  //     }
-  //     else /* Automatic Mode change STANDBY */
-  //     {
-  //       printf("Automatic Mode change STANDBY fail from TX Continuous Mode\r\n");
-  //     }
-
-  //     /* Begin Read Data Transmit in FIFO */
-  //     vSpi1Write(RegFifoAddrPtr, FIFO_TX_BASE_ADDR); /* Set FifoPtrAddr to FifoTxPtrBase */
-  //     ucData = ucSpi1Read(RegFifoAddrPtr);
-  //     printf("Set Write Base Address to FifoAddrPtr: RegFifoAddrPtr = 0x%XH\r\n", ucData);
-
-  //     ucData = ucSpi1Read(RegFifo); /* Check Destination Address */
-  //     printf("Check Destination Address in FiFo: RegFifo = 0x%XH\r\n", ucData);
-  //     ucData = ucSpi1Read(RegFifo); /* Check Source Address */
-  //     printf("Check Source Address in FiFo: RegFifo = 0x%XH\r\n", ucData);
-  //     ucData = ucSpi1Read(RegFifo); /* Check Led Status */
-  //     printf("Check Led Status in FiFo: RegFifo = 0x%XH\r\n", ucData);
-  //     /* End Read Data Transmit in FIFO */
-
-  //     ucData = ucSpi1Read(RegIrqFlags);
-  //     printf("Check TxDone Flag Before Clear: RegIrqFlags = 0x%XH\r\n", ucData);
-
-  //     vSpi1Write(RegIrqFlags, (ucIrqStatus & 0x08u)); /* Clear TxDone Flag */
-  //     ucData = ucSpi1Read(RegIrqFlags);
-  //     printf("Clear TxDone Flag: RegIrqFlags = 0x%XH\r\n", ucData);
-  //   } while (bRepeat);
-
-  //   vModeInit(SLEEP_MODE); /* Init Module Lora into Sleep Mode */
-  //   ucData = ucSpi1Read(RegOpMode);
-  //   printf("Check Sleep Mode: RegOpMode = 0x%XH\r\n", ucData);
-  //   printf("Module switch to Sleep Mode\r\n");
-  //   STM_LOGD("lora.c", "---------- Finish Transmit ----------");
-  // }
-
-  // /**
-  //   * @brief Receive Data in FIFO
-  //   * @param pcRxBuffer: Data Address Receive
-  //   * @param bRepeat: Receive Mode: Rx Single or Continuous
-  //   * @retval None
-  //   */
-  // void vLoraReceive(uint8_t *pcRxBuffer, bool bRepeat)
-  // {
-  //   uint8_t ucData = 0;
-  //   uint8_t i = 0;
-  //   uint8_t ucIrqStatus = 0;
-
-  //   printf("****************** Start Receive ********************\r\n\r\n");
-
-  //   /* Init Module Lora into Standby Mode */
-  //   vModeInit(STDBY_MODE);
-  //   ucData = ucSpi1Read(RegOpMode);
-  //   printf("Init Standby Mode: RegOpMode = 0x%XH\r\n", ucData);
-
-  //   /* Set FifoPtrAddr to FifoRxPtrBase */
-  //   vSpi1Write(RegFifoAddrPtr, FIFO_RX_BASE_ADDR);
-  //   ucData = ucSpi1Read(RegFifoAddrPtr);
-  //   printf("Set Read Base Address to FifoAddrPtr: RegFifoAddrPtr = 0x%XH\r\n", ucData);
-
-  //   /* If Rx Continuous Mode */
-  //   if (bRepeat == true)
-  //   {
-  //     /* Init Module Lora into RX Coninuous Mode */
-  //     vModeInit(RXCONTINUOUS_MODE);
-  //     ucData = ucSpi1Read(RegOpMode);
-  //     printf("Init Rx Continuous Mode: RegOpMode = 0x%XH\r\n", ucData);
-
-  //     while (1)
-  //     {
-  //       ucData = ucSpi1Read(RegIrqFlags);
-  //       printf("Check RxDone Flags Before: RegIrqFlags = 0x%XH\r\n", ucData);
-
-  //       /* Wait for RxDone set */
-  //       while ((ucSpi1Read(RegIrqFlags) & 0x40u) == 0u)
-  //         ;
-
-  //       ucIrqStatus = ucSpi1Read(RegIrqFlags);
-  //       printf("Check PayloadCrcError and RxDone Flags: RegIrqFlags = 0x%XH\r\n", ucIrqStatus);
-
-  //       /* If PayloadCrcError Flag not set and ValidHeader Flag set */
-  //       if (((ucIrqStatus & 0x20u) == 0u) && ((ucIrqStatus & 0x10u) != 0u))
-  //       {
-  //         ucData = ucSpi1Read(RegFifoRxCurrentAddr);
-  //         vSpi1Write(RegFifoAddrPtr, ucData);
-
-  //         for (i = 0u; i < PAYLOAD_LENGTH; i++)
-  //         {
-  //           *(pcRxBuffer + i) = ucSpi1Read(RegFifo);
-  //           ucData = *(pcRxBuffer + i);
-  //           printf("Read Data From FIFO: RegFifo = 0x%XH\r\n", ucData);
-  //         }
-  //         /* Read RSSI Value */
-
-  //         //        printf("RSSI Value = %d\r\n", sRssiRead());
-
-  //         /* Clear RxDone Flag */
-  //         vSpi1Write(RegIrqFlags, (ucIrqStatus & 0x40u));
-  //         ucData = ucSpi1Read(RegIrqFlags);
-  //         printf("Clear RxDone Flag: RegIrqFlags = 0x%XH\r\n", ucData);
-
-  //         /* Clear ValidHeader Flag */
-  //         vSpi1Write(RegIrqFlags, (ucIrqStatus & 0x10u));
-  //         ucData = ucSpi1Read(RegIrqFlags);
-  //         printf("Clear ValidHeader Flag: RegIrqFlags = 0x%XH\r\n", ucData);
-  //       }
-
-  //       /* If PayloadCrcError Flag set */
-  //       else
-  //       {
-  //         printf("Data Receive Failed\r\n");
-
-  //         ucData = ucSpi1Read(RegIrqFlags);
-  //         printf("Check PayloadCrcError Flag Before Clear: RegIrqFlags = 0x%XH\r\n", ucData);
-
-  //         /* Clear PayloadCrcError Flag */
-  //         vSpi1Write(RegIrqFlags, (ucIrqStatus & 0x20u));
-  //         ucData = ucSpi1Read(RegIrqFlags);
-  //         printf("Clear PayloadCrcError Flag: RegIrqFlags = 0x%XH\r\n", ucData);
-  //       }
-  //       printf("****************** Finish Receive ********************\r\n\r\n");
-  //     }
-  //   }
-
-  //   /* If Rx Single Module */
-  //   else
-  //   {
-  //     /* Init Module Lora into RX Single Mode */
-  //     vModeInit(RXSINGLE_MODE);
-  //     ucData = ucSpi1Read(RegOpMode);
-  //     printf("Init Rx Single Mode: RegOpMode = 0x%XH\r\n", ucData);
-
-  //     ucData = ucSpi1Read(RegIrqFlags);
-  //     printf("Check RxTimeout and RxDone Flags: RegIrqFlags = 0x%XH\r\n", ucData);
-
-  //     /* Wait for RxTimeout or RxDone Flag set */
-  //     while (((ucSpi1Read(RegIrqFlags) & 0x40u) | (ucSpi1Read(RegIrqFlags) & 0x80)) == 0u)
-  //       ;
-
-  //     ucIrqStatus = ucSpi1Read(RegIrqFlags);
-  //     printf("Check RxTimeout or RxDone: RegIrqFlags = 0x%XH\r\n", ucIrqStatus);
-
-  //     /* If RxDone Flag set */
-  //     if ((ucIrqStatus & 0x40u) != 0u)
-  //     {
-  //       ucData = ucSpi1Read(RegOpMode);
-  //       printf("Check Automatic Mode change STANDBY: RegOpMode = 0x%XH\r\n", ucData);
-
-  //       /* If Automatic Mode change STANDBY */
-  //       if ((ucData & 0x01u) != 0u)
-  //       {
-  //         printf("Automatic Mode change STANBY from RX Single Mode\r\n");
-
-  //         ucIrqStatus = ucSpi1Read(RegIrqFlags);
-  //         printf("Check PlayloadCrcError Flag: RegIrqFlags = 0x%XH\r\n", ucIrqStatus);
-
-  //         /* If PlayloadCrcError Flag not set and ValidHeader Flag set */
-  //         if (((ucIrqStatus & 0x20u) == 0u) && ((ucIrqStatus & 0x10u) != 0u))
-  //         {
-  //           ucData = ucSpi1Read(RegFifoRxCurrentAddr);
-  //           vSpi1Write(RegFifoAddrPtr, ucData);
-  //           for (i = 0u; i < PAYLOAD_LENGTH; i++)
-  //           {
-  //             *(pcRxBuffer + i) = ucSpi1Read(RegFifo);
-  //             ucData = *(pcRxBuffer + i);
-  //             printf("Read Data From FIFO: RegFifo = 0x%XH\r\n", ucData);
-  //           }
-  //           ucData = ucSpi1Read(RegIrqFlags);
-  //           printf("Check RxDone and ValidHeader Flags Before Clear: RegIrqFlags = 0x%XH\r\n", ucData);
-
-  //           vSpi1Write(RegFifoAddrPtr, FIFO_RX_BASE_ADDR);
-
-  //           /* Clear ValidHeader Flag */
-  //           vSpi1Write(RegIrqFlags, (ucIrqStatus & 0x10u));
-  //           ucData = ucSpi1Read(RegIrqFlags);
-  //           printf("Clear ValidHeader Flag: RegIrqFlags = 0x%XH\r\n", ucData);
-
-  //           /* Clear RxDone Flag */
-  //           vSpi1Write(RegIrqFlags, (ucIrqStatus & 0x40u));
-  //           ucData = ucSpi1Read(RegIrqFlags);
-  //           printf("Clear RxDone Flag: RegIrqFlags = 0x%XH\r\n", ucData);
-  //         }
-
-  //         /* If PlayloadCrcError Flag set  */
-  //         else
-  //         {
-  //           /* Read Flags Status */
-  //           ucIrqStatus = ucSpi1Read(RegIrqFlags);
-  //           printf("Check PayloadCrcError Flag Before Clear: RegIrqFlags = 0x%XH\r\n", ucIrqStatus);
-
-  //           /* Clear PayloadCrcError Flag */
-  //           vSpi1Write(RegIrqFlags, (ucIrqStatus & 0x20u));
-  //           ucData = ucSpi1Read(RegIrqFlags);
-  //           printf("Clear PayloadCrcError Flag: RegIrqFlags = 0x%XH\r\n", ucData);
-  //         }
-
-  //         /* Init Module Lora into Sleep Mode */
-  //         vModeInit(SLEEP_MODE);
-  //         ucData = ucSpi1Read(RegOpMode);
-  //         printf("Init Sleep Mode: RegOpMode = 0x%XH\r\n", ucData);
-  //       }
-
-  //       /* If Automatic Mode chang STANBY fail */
-  //       else
-  //       {
-  //         printf("Automatic Mode change STANBY fail from RX Single Mode\r\n");
-  //       }
-  //     }
-
-  //     /* If Rxtimeout Flag set */
-  //     else
-  //     {
-  //       ucData = ucSpi1Read(RegOpMode);
-  //       printf("Check Standby Mode: RegOpMode = 0x%XH\r\n", ucData);
-  //       if ((ucData & 0x01u) != 0u)
-  //       {
-  //         printf("Automatic Mode change STANBY from RX Single Mode\r\n");
-
-  //         ucData = ucSpi1Read(RegIrqFlags);
-  //         printf("Check Timeout Flag Before Clear: RegIrqFlags = 0x%XH\r\n", ucData);
-
-  //         /* Clear Timeout Flag */
-  //         vSpi1Write(RegIrqFlags, (ucIrqStatus & 0x80u));
-  //         ucData = ucSpi1Read(RegIrqFlags);
-  //         printf("Clear Timeout Flag: RegIrqFlags = 0x%XH\r\n", ucData);
-  //       }
-
-  //       /* If Automatic Mode chang STANBY fail */
-  //       else
-  //       {
-  //         printf("Automatic Mode change STANBY fail from RX Single Mode\r\n");
-  //       }
-  //     }
-  //   }
-  //   printf("****************** Finish Receive ********************\r\n\r\n");
-  // }
 
 uint16_t usLoRaGetPreamble(void)
 {
@@ -1689,13 +1265,10 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs)
       STM_LOGV("LoRaTX", "data transmit[%d]: %d", i, *(data + i));
     }
 
-    // LORA_GET_REGISTER(RegFifoAddrPtr);
     vSpi1Write(RegFifo, *(data + i));
   }
   /* MODE REQUEST TX */
   vModeInit(TX_MODE);
-  // LORA_GET_REGISTER(RegOpMode);
-  /* Init Module Lora into TX Mode */
   uint32_t startTick = HAL_GetTick();
   STM_LOGV("LoRaTX", "Wait for TX_DONE ...\r\n");
   while ((ucSpi1Read(RegIrqFlags) & TX_DONE_Msk) >> TX_DONE_MskPos == 0u)
@@ -1710,7 +1283,8 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs)
   if (isTransmitOk)
     STM_LOGD("LoRaTX", "Send msg to GW success");
   /* Clear TxDone Flag */
-  vSpi1Write(RegIrqFlags, TX_DONE_Msk);
+  LoRaClearITFlag(TX_DONE_Msk);
+  vModeInit(RXCONTINUOUS_MODE);
 }
 
 void LoRaReceiveCont(uint8_t* outData, uint8_t size, uint32_t timeoutMs)
@@ -1785,22 +1359,52 @@ uint8_t LoRaGetITFlag(uint8_t irqFlag)
 
   switch (irqFlag)
   {
-  case CAD_DETECTED_MskPos:
-    return (ucSpi1Read(RegIrqFlags) & CAD_DETECTED_Msk) >> CAD_DETECTED_MskPos;
-  case FHSS_CHANGE_CHANNEL_MskPos:
-    return (ucSpi1Read(RegIrqFlags) & FHSS_CHANGE_CHANNEL_Msk) >> FHSS_CHANGE_CHANNEL_MskPos;
-  case CAD_DONE_MskPos:
-    return (ucSpi1Read(RegIrqFlags) & CAD_DONE_Msk) >> CAD_DONE_MskPos;
-  case TX_DONE_MskPos:
-    return (ucSpi1Read(RegIrqFlags) & TX_DONE_Msk) >> TX_DONE_MskPos;
-  case VALID_HEADER_MskPos:
-    return (ucSpi1Read(RegIrqFlags) & VALID_HEADER_Msk) >> VALID_HEADER_MskPos;
-  case PAYLOAD_CRC_ERROR_MskPos:
-    return (ucSpi1Read(RegIrqFlags) & PAYLOAD_CRC_ERROR_Msk) >> PAYLOAD_CRC_ERROR_MskPos;
   case RX_DONE_MskPos:
     return (ucSpi1Read(RegIrqFlags) & RX_DONE_Msk) >> RX_DONE_MskPos;
+  case PAYLOAD_CRC_ERROR_MskPos:
+    return (ucSpi1Read(RegIrqFlags) & PAYLOAD_CRC_ERROR_Msk) >> PAYLOAD_CRC_ERROR_MskPos;
   case RX_TIMEOUT_MskPos:
     return (ucSpi1Read(RegIrqFlags) & RX_TIMEOUT_Msk) >> RX_TIMEOUT_MskPos;
+  case TX_DONE_MskPos:
+    return (ucSpi1Read(RegIrqFlags) & TX_DONE_Msk) >> TX_DONE_MskPos;
+    // case VALID_HEADER_MskPos:
+    //   return (ucSpi1Read(RegIrqFlags) & VALID_HEADER_Msk) >> VALID_HEADER_MskPos;
+    // case CAD_DETECTED_MskPos:
+    //   return (ucSpi1Read(RegIrqFlags) & CAD_DETECTED_Msk) >> CAD_DETECTED_MskPos;
+    // case FHSS_CHANGE_CHANNEL_MskPos:
+    //   return (ucSpi1Read(RegIrqFlags) & FHSS_CHANGE_CHANNEL_Msk) >> FHSS_CHANGE_CHANNEL_MskPos;
+    // case CAD_DONE_MskPos:
+    //   return (ucSpi1Read(RegIrqFlags) & CAD_DONE_Msk) >> CAD_DONE_MskPos;
+  default:
+    return -1;
   }
-  return -1;
+}
+
+void LoRaClearITFlag(uint8_t flag)
+{
+  vSpi1Write(RegIrqFlags, flag);
+  if (flag & RX_DONE_Msk) {
+    STM_LOGV("LoRa", "Clear RX_DONE_IT_FLAG");
+  }
+  if (flag & PAYLOAD_CRC_ERROR_Msk) {
+    STM_LOGV("LoRa", "Clear PAYLOAD_CRC_ERROR_IT_FLAG");
+  }
+  if (flag & RX_TIMEOUT_Msk) {
+    STM_LOGV("LoRa", "Clear RX_TIMEOUT_IT_FLAG");
+  }
+  if (flag & TX_DONE_Msk) {
+    STM_LOGV("LoRa", "Clear TX_DONE_IT_FLAG");
+  }
+  // if (flag & VALID_HEADER_Msk) {
+  //   STM_LOGV("LoRa", "Clear VALID_HEADER_IT_FLAG");
+  // }
+  // if (flag & CAD_DETECTED_Msk) {
+  //   STM_LOGV("LoRa", "Clear CAD_DETECTED_IT_FLAG");
+  // }
+  // if (flag & FHSS_CHANGE_CHANNEL_Msk) {
+  //   STM_LOGV("LoRa", "Clear FHSS_CHANGE_CHANNEL_IT_FLAG");
+  // }
+  // if (flag & CAD_DONE_Msk) {
+  //   STM_LOGV("LoRa", "Clear CAD_DONE_IT_FLAG");
+  // }
 }

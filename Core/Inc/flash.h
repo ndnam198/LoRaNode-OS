@@ -4,9 +4,9 @@
  * @brief  This lib provides method to control internal Flash module read/write sequence of STM32F1xx Medium density chip
  * @version 0.1
  * @date 2020-10-20
- * 
+ *
  * @copyright Copyright (c) 2020
- * 
+ *
  */
 #ifndef __MY_FLASH_H
 #define __MY_FLASH_H
@@ -14,8 +14,17 @@
 #include "main.h"
 #include "stdio.h"
 #include "string.h"
+#include "stm_log.h"
 
-/* STM32F103C8 Medium Density Flash Define - BEGIN */
+#define FLASH_READ(addr) \
+do {\
+        uint32_t temp = Flash_ReadAddress(addr);\
+        STM_LOGV("Flash", "data at 0x%x: 0x%x - dec: %d", addr, temp, temp)\
+} while (0)
+
+ /* STM32F103C8 Medium Density Flash Define - BEGIN */
+
+#define FLASH_EMPTY     (-1)
 
 #define PAGE_SIZE (1024u)
 #define MAX_FLASH_PAGES 64U
@@ -86,43 +95,35 @@
 #define ADDR_FLASH_PAGE_63 ((uint32_t)0x0800fc00) /* Base Address Page 63, 1Kbytes each */
 #define FLASH_END_ADDRESS ((uint32_t)0x08010000)
 
-typedef enum
-{
-    FLASH_SUCCESS = 0x00U,
-    FLASH_ERROR,
-} Flash_Status_t;
-
 /**
  * @brief Write data to flash
- * 
- * @param start_address 
- * @param end_address 
- * @param data 
- * @param data_length 
- * @return Flash_Status_t 
+ *
+ * @param start_address
+ * @param data
+ * @return HAL_StatusTypeDef
  */
-Flash_Status_t Flash_WriteWord(uint32_t start_address, uint32_t end_address, uint32_t *data, uint32_t data_length);
+HAL_StatusTypeDef Flash_WriteWord(uint32_t start_address, uint32_t data);
 
 /**
  * @brief Read data from a specific flash address
- * 
- * @param flash_address 
- * @return uint32_t 
+ *
+ * @param flash_address
+ * @return uint32_t
  */
-uint32_t Flash_ReadAddress(uint32_t flash_address);
+int Flash_ReadAddress(uint32_t flash_address);
 
 /**
  * @brief Get the Sector object
- * 
- * @param flash_address[in] a 32 bit interger flash address 
+ *
+ * @param flash_address[in] a 32 bit interger flash address
  * @return int8_t the page that the passed-in flash address belongs to or else -1
  */
-int8_t Flash_getAddressPage(uint32_t flash_address);
+int8_t Flash_GetAddressPage(uint32_t flash_address);
 
 /**
  * @brief Erase number of pages
- * 
+ *
  */
-void Flash_ErasePage(uint32_t start_address, uint32_t nb_of_page);
+HAL_StatusTypeDef Flash_ErasePage(uint32_t start_address, uint32_t nb_of_delete_pages);
 
 #endif // !__MY_FLASH_H

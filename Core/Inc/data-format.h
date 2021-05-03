@@ -3,6 +3,7 @@
 
 #include "lora.h"
 #include "main.h"
+#include "misc.h"
 
 /* Node address must be in rage [0:0xFE] */
 #define NODE1_ADDRESS   0x12u   /* Address node 1 */
@@ -14,16 +15,16 @@
 
 enum MSG_INDEX
 {
-    INDEX_SOURCE_ID = 0u,     /* Header field, Tranceiver ID */
-    INDEX_DEST_ID = 1u,           /* Header field, Receiver ID */
-    INDEX_MSG_TYPE = 2u,          /* Header field, Type of msg, refer @MSG_TYPE enumeration */
-    INDEX_MSG_STATUS = 3u,        /* Header field, Status of msg, refer @MSG_STATUS enumeration */
-    INDEX_SEQUENCE_ID = 4u,       /* Header field, Message's sequence ID */
-    INDEX_DATA_LOCATION = 5u,     /* Data field, refer to @DATA_LOCATION enumeration */
-    INDEX_DATA_RELAY_STATE = 6u, /* Data field, either On or Off */
-    INDEX_DATA_ERR_CODE = 7u,     /* Data field, refer to @DATA_ERR_CODE */
-    INDEX_DATA_TIME_ALIVE = 8u,   /* Data field, time elapsed since light is controlled to On state */
-    INDEX_UNDEFINED = 9u,             /*  */
+    INDEX_SOURCE_ID = 0u,          /* Header field, Tranceiver ID */
+    INDEX_DEST_ID = 1u,            /* Header field, Receiver ID */
+    INDEX_MSG_TYPE = 2u,           /* Header field, Type of msg, refer @MSG_TYPE enumeration */
+    INDEX_MSG_STATUS = 3u,         /* Header field, Status of msg, refer @MSG_STATUS enumeration */
+    INDEX_SEQUENCE_ID = 4u,        /* Header field, Message's sequence ID */
+    INDEX_DATA_LOCATION = 5u,      /* Data field, refer to @DATA_LOCATION enumeration */
+    INDEX_DATA_RELAY_STATE = 6u,   /* Data field, either On or Off */
+    INDEX_DATA_ERR_CODE = 7u,      /* Data field, refer to @DATA_ERR_CODE */
+    INDEX_COMMAND_OPCODE = 8u,             /* Specify command by OPCODE, refer @OPCODE*/
+    INDEX_RESET_CAUSE = 9u,        /* Data field, refer to @reset_cause in misc.h */
     INDEX_MAX = 10u,
 };
 
@@ -52,8 +53,9 @@ typedef enum HEADER_ACK
 
 typedef enum DATA_RELAY
 {
-    RELAY_STATE_ON = 0u,
-    RELAY_STATE_OFF = 1u,
+    RELAY_STATE_OFF = 0u,
+    RELAY_STATE_ON = 1u,
+    RELAY_STATE_NONE = 2u,
     RELAY_STATE_MAX,
 } NodeStsTypedef_t;
 
@@ -67,7 +69,7 @@ typedef enum DATA_ERR_CODE
 
 typedef enum DATA_LOCATION
 {
-    LOCATION_UNKNOWN,
+    LOCATION_NONE,
     LOCATION_GIAI_PHONG_1,
     LOCATION_GIAI_PHONG_2,
     LOCATION_GIAI_PHONG_3,
@@ -81,6 +83,17 @@ typedef enum DATA_LOCATION
     LOCATION_MAX,
 } NodeLocationTypeDef_t;
 
+enum OPCODE {
+    OPCODE_NONE = 0,
+    OPCODE_REQUEST_STATE = 1,
+    OPCODE_RESPOSNE_STATE = OPCODE_REQUEST_STATE + 100,
+    OPCODE_REQUEST_RELAY_CONTROL = 2,
+    OPCODE_RESPOSNE_RELAY_CONTROL = OPCODE_REQUEST_RELAY_CONTROL + 100,
+    OPCODE_REQUEST_MCU_RESET = 3,
+    OPCODE_RESPOSNE_MCU_RESET = OPCODE_REQUEST_MCU_RESET + 100,
+    OPCODE_REQUEST_LOCATION_UPDATE = 4,
+    OPCODE_RESPOSNE_LOCATION_UPDATE = OPCODE_REQUEST_LOCATION_UPDATE + 100,
+};
 
 typedef struct NodeData {
     uint8_t nodeID;
@@ -88,5 +101,33 @@ typedef struct NodeData {
     NodeStsTypedef_t relayState;
     NodeErrCodeTypeDef_t errCode;
 } NodeTypedef_t;
+
+#define PACK_RESPONSE_MSG(msg, node, msgSts, seqID, opcode)\
+do {                                                    \
+msg[INDEX_SOURCE_ID]        = node.nodeID;              \
+msg[INDEX_DEST_ID]          = GATEWAY_ADDRESS;          \
+msg[INDEX_MSG_TYPE]         = MSG_TYPE_RESPONSE;        \
+msg[INDEX_MSG_STATUS]       = msgSts;                   \
+msg[INDEX_SEQUENCE_ID]      = seqID;                    \
+msg[INDEX_DATA_LOCATION]    = node.location;            \
+msg[INDEX_DATA_RELAY_STATE] = node.relayState;          \
+msg[INDEX_DATA_ERR_CODE]    = node.errCode;             \
+msg[INDEX_COMMAND_OPCODE]   = opcode;                   \
+msg[INDEX_RESET_CAUSE]      = eRESET_CAUSE_UNKNOWN ;    \
+} while (0)
+
+#define PACK_NOTIF_MSG(msg, node, resetCause)\
+do {                                              \
+msg[INDEX_SOURCE_ID]        = node.nodeID;        \
+msg[INDEX_DEST_ID]          = GATEWAY_ADDRESS;    \
+msg[INDEX_MSG_TYPE]         = MSG_TYPE_NOTIF;     \
+msg[INDEX_MSG_STATUS]       = MSG_STS_NONE;       \
+msg[INDEX_SEQUENCE_ID]      = -1;                 \
+msg[INDEX_DATA_LOCATION]    = node.location;      \
+msg[INDEX_DATA_RELAY_STATE] = node.relayState;    \
+msg[INDEX_DATA_ERR_CODE]    = node.errCode;       \
+msg[INDEX_COMMAND_OPCODE]   = 0;                  \
+msg[INDEX_RESET_CAUSE]      = resetCause ;        \
+} while (0)
 
 #endif /* !__DATA_FORMAT_H */

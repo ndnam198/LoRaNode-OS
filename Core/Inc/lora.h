@@ -17,8 +17,10 @@
 #include "main.h"
 #include "stdbool.h"
 /* Define Long Range Mode*/
+
 #define USE_LORA_MODE               (1u)
 
+#define LORA_DELAY                  (1000u)
 #define LORA_MAX_DELAY              (0xFFFF)
 
 #define DELAY_SPI                   3u
@@ -480,7 +482,7 @@ uint8_t usLoraGetSpreadingFactor(void);
 void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs);
 void LoRaReceiveCont(uint8_t* outData, uint8_t size, uint32_t timeoutMs);
 uint8_t LoRaGetITFlag(uint8_t irqFlag);
-
+void LoRaClearITFlag(uint8_t flag);
 /* -------------------------- End private functions ------------------------- */
 
 #endif /* !_LORA_H_ */

@@ -1,0 +1,8 @@
+OBJS += doGitVersion
+-DVERSION=${OBJS}
+@echo ${OBJS}
+doGitVersion:
+    @touch ./myMainProgram.c
+    @echo -n "#define GIT_VERSION  \""                  >  ./git_ver.h
+    @echo -n `git describe --abbrev=7 --dirty --always` >> ./git_ver.h
+    @echo "\""                                          >> ./git_ver.h

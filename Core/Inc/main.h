@@ -32,11 +32,16 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#define THIS_NODE_ADDRESS  NODE1_ADDRESS
+#define THIS_NODE_LOCATION LOCATION_GIAI_PHONG_1
+#define ADDR_RELAY_STATE   ADDR_FLASH_PAGE_55
+#define ADDR_LOCATION      ADDR_FLASH_PAGE_55+4
+#define ADDR_ERROR_CODE    ADDR_FLASH_PAGE_55+8
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+
 
 /* USER CODE END ET */
 
@@ -54,7 +59,7 @@ extern "C" {
   void Error_Handler(void);
 
   /* USER CODE BEGIN EFP */
-
+void updateDataToFlash(void);
   /* USER CODE END EFP */
 
   /* Private defines -----------------------------------------------------------*/
@@ -74,11 +79,11 @@ extern "C" {
 /* USER CODE BEGIN Private defines */
 #define WHICH_ERROR(err) (err == HAL_ERROR) ? "HAL_ERROR" : ((err == HAL_BUSY) ? "HAL_BUSY" : "HAL_TIMEOUT")
 
-#define WHICH_MSG_STS(msg_sts) (msg_sts == MSG_STS_OK) ? "MSG_STS_OK" : "MSG_STS_FAILED"
+#define WHICH_MSG_STS(msg_sts) (msg_sts == MSG_STS_OK) ? "MSG_STS_OK" : ((msg_sts == MSG_STS_NONE) ? "MSG_STS_NONE" : "MSG_STS_FAILED")
 #define WHICH_MSG_TYPE(type) (type == MSG_TYPE_REQUEST) ? "REQUEST" : ((type == MSG_TYPE_RESPONSE) ? "RESPONSE" : "NOTIF")
 #define WHICH_RELAY(state) (state == RELAY_STATE_OFF) ? "RELAY_OFF" : ((state == RELAY_STATE_ON) ? "RELAY_ON" : "RELAY_UNKNOWN")
 #define WHICH_RELAY_ERR(err) (err == ERR_CODE_NONE) ? "ERR_NONE" : ((err == ERR_CODE_LIGHT_ON_FAILED) ? "ON_FAILED" : "OFF_FAILED")
-  
+
 #define WHICH_MODE(mode)           \
 (mode == SLEEP_MODE) ? "SLEEP" :   \
 ((mode == STDBY_MODE) ? "STANDBY" :\
