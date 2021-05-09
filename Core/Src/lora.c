@@ -10,6 +10,9 @@
 #include "stm_log.h"
 #include <stdbool.h>
 #include "data-format.h"
+
+#define LORA_TAG  "LORA_TAG"
+
  /* Variables */
 extern SPI_HandleTypeDef hspi1;
 
@@ -110,7 +113,7 @@ void vLowFrequencyModeOnInit(uint8_t ucLowFrequencyModeOn)
   */
 void vModeInit(uint8_t ucMode)
 {
-  STM_LOGD("LoRa", "LoRa -> %s", WHICH_MODE(ucMode));
+  STM_LOGD(LORA_TAG, "LoRa -> %s", WHICH_MODE(ucMode));
   uint8_t ucData = 0;
   ucData = ucSpi1Read(RegOpMode);
   ucData &= 0xF8;
@@ -423,23 +426,24 @@ uint8_t ucModemStatusRead(void)
   * @param None
   * @retval Value Estimation of SNR on last packet received
   */
-uint8_t ucPacketSnrRead(void)
+int8_t ucPacketSnrRead(void)
 {
-  uint8_t ucData;
-  ucData = ucSpi1Read(RegPktSnrValue);
-  return ucData;
+  return ucSpi1Read(RegPktSnrValue);
 }
 
-/**
-  * @brief Read RSSI of the latest packet received
-  * @param None
-  * @retval Value RSSI of the latest packet received
-  */
-uint16_t ucPacketRssiRead(void)
+int16_t LoRaGetPktStrength(void)
 {
-  uint16_t rawRssi = ucSpi1Read(RegPktRssiValue);
-  uint16_t rawSNR = ucSpi1Read(RegPktSnrValue) / 4;
-  return (-164 + rawRssi + rawSNR * 0.25);
+  int16_t rssi;
+  int8_t snr = (int8_t)ucPacketSnrRead();
+  if (snr < 0)
+  {
+    rssi = (int16_t)(ucSpi1Read(RegPktRssiValue) + snr * 0.25 - 164);
+  }
+  else
+  {
+    rssi = (int16_t)(ucSpi1Read(RegPktRssiValue) * 16 / 15 - 164);
+  }
+  return rssi;
 }
 
 /**
@@ -474,6 +478,7 @@ uint8_t ucPllTimeoutRead(void)
 uint8_t ucCrcOnPayloadread(void)
 {
   uint8_t ucData;
+
   ucData = 0x01 & (ucSpi1Read(RegHopChannel) >> 6);
   return ucData;
 }
@@ -1081,7 +1086,7 @@ void vPllBandwidth(uint8_t ucPllBandwidth)
 void vLoraInit(void)
 {
 
-  STM_LOGD("LoRa", "LoRa init");
+  STM_LOGD(LORA_TAG, "LoRa init");
 
   vLongRangeModeInit(LORA_MODE); /*  Init Module Lora into Lora TM Mode */
   // LORA_GET_REGISTER(RegOpMode);
@@ -1238,6 +1243,11 @@ uint8_t usLoraGetSpreadingFactor(void)
   return (ucSpi1Read(RegModemConfig2) & SPREADING_FACTOR_Msk) >> SPREADING_FACTOR_MskPos;
 }
 
+uint8_t usLoRaGetClockSource(void)
+{
+  return ((ucSpi1Read(RegTcxo) & 0x10) >> 4);
+}
+
 void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs)
 {
   bool isTransmitOk = true;
@@ -1384,27 +1394,110 @@ void LoRaClearITFlag(uint8_t flag)
 {
   vSpi1Write(RegIrqFlags, flag);
   if (flag & RX_DONE_Msk) {
-    STM_LOGV("LoRa", "Clear RX_DONE_IT_FLAG");
+    STM_LOGV(LORA_TAG, "Clear RX_DONE_IT_FLAG");
   }
   if (flag & PAYLOAD_CRC_ERROR_Msk) {
-    STM_LOGV("LoRa", "Clear PAYLOAD_CRC_ERROR_IT_FLAG");
+    STM_LOGV(LORA_TAG, "Clear PAYLOAD_CRC_ERROR_IT_FLAG");
   }
   if (flag & RX_TIMEOUT_Msk) {
-    STM_LOGV("LoRa", "Clear RX_TIMEOUT_IT_FLAG");
+    STM_LOGV(LORA_TAG, "Clear RX_TIMEOUT_IT_FLAG");
   }
   if (flag & TX_DONE_Msk) {
-    STM_LOGV("LoRa", "Clear TX_DONE_IT_FLAG");
+    STM_LOGV(LORA_TAG, "Clear TX_DONE_IT_FLAG");
   }
   // if (flag & VALID_HEADER_Msk) {
-  //   STM_LOGV("LoRa", "Clear VALID_HEADER_IT_FLAG");
+  //   STM_LOGV(LORA_TAG, "Clear VALID_HEADER_IT_FLAG");
   // }
   // if (flag & CAD_DETECTED_Msk) {
-  //   STM_LOGV("LoRa", "Clear CAD_DETECTED_IT_FLAG");
+  //   STM_LOGV(LORA_TAG, "Clear CAD_DETECTED_IT_FLAG");
   // }
   // if (flag & FHSS_CHANGE_CHANNEL_Msk) {
-  //   STM_LOGV("LoRa", "Clear FHSS_CHANGE_CHANNEL_IT_FLAG");
+  //   STM_LOGV(LORA_TAG, "Clear FHSS_CHANGE_CHANNEL_IT_FLAG");
   // }
   // if (flag & CAD_DONE_Msk) {
-  //   STM_LOGV("LoRa", "Clear CAD_DONE_IT_FLAG");
+  //   STM_LOGV(LORA_TAG, "Clear CAD_DONE_IT_FLAG");
   // }
 }
+
+void LoRaInit(LoRaInitTypeDef_t* conf)
+{
+  if (conf == NULL)
+  {
+    STM_LOGE(LORA_TAG, "conf is NULL");
+    return;
+  }
+
+  STM_LOGD(LORA_TAG, "LoRa init");
+
+  vLongRangeModeInit(LORA_MODE); /*  Init Module Lora into Lora TM Mode */
+  // LORA_GET_REGISTER(RegOpMode);
+
+  vModeInit(STDBY_MODE);                              /* Init Module Lora into Standby Mode */
+  vAccessSharedRegInit(ACCESS_LORA_REGISTERS);        /* Access LoRa registers page 0x0D: 0x3F */
+  vLowFrequencyModeOnInit(ACCESS_LOW_FREQUENCY_MODE); /* Access Low Frequency Mode registers */
+  // LORA_GET_REGISTER(RegOpMode);
+
+  vPaSelectInit(PA_BOOST); /* Output power is limited to +20 dBm */
+  // vMaxPowerInit(MAX_POWER);
+  vOutputPowerInit(OUTPUT_POWER); /* Pout=17-(15-OutputPower) */
+  // LORA_GET_REGISTER(RegPaConfig);
+
+  vOcpTrimInit(OCP_TRIM); /* Trimming of OCP current: Imax = 240mA */
+  // LORA_GET_REGISTER(RegOcp);
+
+  vFifoTxBaseAddrInit(FIFO_TX_BASE_ADDR); /* Write base address in FIFO data buffer for TX modulator */
+  // LORA_GET_REGISTER(RegFifoTxBaseAddr);
+
+  vFifoRxBaseAddrInit(FIFO_RX_BASE_ADDR); /* Read base address in FIFO data buffer for RX demodulator */
+  // LORA_GET_REGISTER(RegFifoRxBaseAddr);
+
+  vImplicitHeaderModeOnInit(IMPLICIT_HEADER); /* ANCHOR Init Implicit Header mode */
+  vRxPayloadCrcOnInit(CRC_ENABLE); /* ANCHOR Enable CRC generation and check on payload */
+  // LORA_GET_REGISTER(RegModemConfig2);
+
+  vPayloadLengthInit(PAYLOAD_LENGTH); /*  Init Payload length */
+  // LORA_GET_REGISTER(RegPayloadLength);
+  vBandWidthInit(conf->_bandwidth); /*  Signal bandwidth: BANDWIDTH_125K */
+  vCodingRateInit(conf->_codingRate); /* ANCHOR Error coding rate 4/5 */
+
+  vPreambleLengthInit(conf->_preamble); /* ANCHOR Preamble length = PreambleLength + 4.25 Symbols */
+  // // LORA_GET_REGISTER(RegPreambleMsb);
+  // // LORA_GET_REGISTER(RegPreambleLsb);
+  // LORA_GET_REGISTER(RegModemConfig1);
+
+  if (conf->_spreadingFactor == SPREADING_FACTOR_6_64) {
+    vDetectionOptimizeInit(0x05); /* LoRa Detection Optimize 0x03 -> SF7 to SF12; 0x05 -> SF6 */
+    vDetectionThresholdInit(0x0C); /* ANCHOR LoRa detection threshold 0x0A -> SF7 to SF12; 0x0C -> SF6 */
+  }
+  vSpreadingFactorInit(conf->_spreadingFactor); /* ANCHOR SF rate 64 chips / symbol */
+
+  // vPayloadMaxLengthInit(PAYLOAD_MAX_LENGTH); /* ANCHOR Maximum payload length */
+  // // LORA_GET_REGISTER(RegMaxPayloadLength);
+
+  // vLowDataRateOptimizeInit(LOW_DATA_RATE_OPTIMIZE); /*  Enabled; mandated for when the symbol length exceeds16ms */
+
+  vTcxoInputOnInit(conf->_osscSource); /* ANCHOR Controls the crystal oscillator */
+  // LORA_GET_REGISTER(RegTcxo);
+
+  vPaDacInit(PA_DAC); /* Enables the +20dBm option on PA_BOOST pin */
+  // LORA_GET_REGISTER(RegPaDac);
+  // LORA_GET_REGISTER(RegLna);
+  // LORA_GET_REGISTER(RegVersion);
+  // LORA_GET_REGISTER(RegOpMode);
+  LORA_GET_REGISTER(RegVersion);
+
+  /* Reset Rx Pointer */
+  vModeInit(STDBY_MODE);
+  vModeInit(RXCONTINUOUS_MODE);
+}
+
+void LoRaGetConfig(void)
+{
+  STM_LOGV(LORA_TAG, "preamble length   : %d", usLoRaGetPreamble());
+  STM_LOGV(LORA_TAG, "bandwidth         : %d", usLoRaGetBandwidth());
+  STM_LOGV(LORA_TAG, "coding rate       : %d", usLoRaGetCodingRate());
+  STM_LOGV(LORA_TAG, "spreading factor  : %d", usLoraGetSpreadingFactor());
+  STM_LOGV(LORA_TAG, "clock source      : %d", usLoRaGetClockSource());
+}
+
+

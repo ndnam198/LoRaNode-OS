@@ -20,7 +20,7 @@
 
 #define USE_LORA_MODE               (1u)
 
-#define LORA_DELAY                  (1000u)
+#define LORA_DELAY                  (3000u)
 #define LORA_MAX_DELAY              (0xFFFF)
 
 #define DELAY_SPI                   3u
@@ -96,19 +96,6 @@
 #define BIT_VALUE_8   (0b11111111)
 
 
-/* -------------------------------------------------------------------------- */
-/*                               LoRa Structure                               */
-/* -------------------------------------------------------------------------- */
-//typedef struct{
-//    LoRaModulationModeTypeDef_t mode;
-//    uint32_t frequency;
-//    uint16_t preamble;
-//    LoRaCodingRateTypeDef_t codingRate;
-//    LoRaHeaderTypeDef_t headerType;
-//    LoRaSpredingFactorTypeDef_t spreadingFactor;
-//    LoRaCrcModeTypeDef_t crcMode;
-//    LoRaOsscSourceTypeDef_t osscSource;
-//} LoRaInitTypeDef_t;
 
 /* -------------------------------------------------------------------------- */
 /*                             Bit Mask Definition                            */
@@ -193,7 +180,7 @@ typedef enum MODE
     LORA_MODE = 1u,
 } LoRaModulationModeTypeDef_t;
 
-enum BANDWIDTH
+typedef enum BANDWIDTH
 {
     BANDWIDTH_7K8 = 0u,
     BANDWIDTH_10K4 = 1u,
@@ -205,7 +192,7 @@ enum BANDWIDTH
     BANDWIDTH_125K = 7u, /* DEFAULT */
     BANDWIDTH_250K = 8u,
     BANDWIDTH_500K = 9u,
-};
+} LoRaBandwidthTypeDef_t;
 
 /* Define Device Coding rate */
 typedef enum CODING_RATE
@@ -261,6 +248,18 @@ typedef enum OSCILLATOR_SOURCE
     XTAL_INPUT = 0u,
     TCXO_INPUT = 1u,
 } LoRaOsscSourceTypeDef_t;
+
+
+/* -------------------------------------------------------------------------- */
+/*                               LoRa Structure                               */
+/* -------------------------------------------------------------------------- */
+typedef struct {
+    uint16_t _preamble;
+    LoRaCodingRateTypeDef_t _codingRate;
+    LoRaSpredingFactorTypeDef_t _spreadingFactor;
+    LoRaBandwidthTypeDef_t _bandwidth;
+    LoRaOsscSourceTypeDef_t _osscSource;
+} LoRaInitTypeDef_t;
 
 /* -------------------------------------------------------------------------- */
 /*                    Begin define registers of module Lora                   */
@@ -428,7 +427,6 @@ uint16_t usValidHeaderCntRead(void);
 uint16_t usValidPacketCntRead(void);
 uint8_t ucRxCodingRateRead(void);
 uint8_t ucModemStatusRead(void);
-uint16_t ucPacketRssiRead(void);
 uint8_t ucRssiRead(void);
 uint8_t ucPllTimeoutRead(void);
 uint8_t ucCrcOnPayloadread(void);
@@ -479,10 +477,15 @@ uint8_t usLoRaGetBandwidth(void);
 uint8_t usLoRaGetCodingRate(void);
 uint8_t usLoRaGetHeaderMode(void);
 uint8_t usLoraGetSpreadingFactor(void);
+uint8_t usLoRaGetClockSource(void);
 void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs);
 void LoRaReceiveCont(uint8_t* outData, uint8_t size, uint32_t timeoutMs);
 uint8_t LoRaGetITFlag(uint8_t irqFlag);
 void LoRaClearITFlag(uint8_t flag);
+void LoRaInit(LoRaInitTypeDef_t* conf);
+void LoRaGetConfig(void);
+int16_t LoRaGetPktStrength(void);
+
 /* -------------------------- End private functions ------------------------- */
 
 #endif /* !_LORA_H_ */

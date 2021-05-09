@@ -4,7 +4,7 @@
 #include "main.h"
 #include "stm_log.h"
 
-#define WATCHDOG_TIME (15000)
+#define WATCHDOG_TIME (15000u)
 
 typedef enum reset_cause
 {
