@@ -114,7 +114,7 @@ msg[INDEX_DATA_LOCATION]    = node.location;            \
 msg[INDEX_DATA_RELAY_STATE] = node.relayState;          \
 msg[INDEX_DATA_ERR_CODE]    = node.errCode;             \
 msg[INDEX_COMMAND_OPCODE]   = opcode;                   \
-msg[INDEX_PACKET_RSSI]      = 0;                        \
+msg[INDEX_PACKET_RSSI]      = getPktStrength();         \
 } while (0)
 
 #define PACK_NOTIF_MSG(msg, node, resetCause)\

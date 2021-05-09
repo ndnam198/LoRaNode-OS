@@ -427,6 +427,7 @@ int8_t PacketSnrRead(void)
 {
   int8_t Data;
   Data = (~ucSpi1Read(RegPktSnrValue) + 1) / 4;
+  STM_LOGV("rssi", "snr: %d", Data);
   return Data;
 }
 
@@ -442,16 +443,19 @@ int16_t PacketRssiRead(void)
   return (-164 + rawRssi + rawSNR * 0.25);
 }
 
-int16_t PacketStrength(void)
+int16_t getPktStrength(void)
 {
-  if(PacketSnrRead() < 0)
+  int16_t rssi;
+  if (PacketSnrRead() < 0)
   {
-    return(ucSpi1Read(RegPktRssiValue) + ucSpi1Read(RegPktSnrValue) * 0.25 - 164);
+    rssi = (ucSpi1Read(RegPktRssiValue) + ucSpi1Read(RegPktSnrValue) * 0.25 - 164);
   }
   else
   {
-    return(ucSpi1Read(RegPktRssiValue) * 16/15 - 164);
+    rssi = ucSpi1Read(RegPktRssiValue) * 16 / 15 - 164;
   }
+  STM_LOGV("rssi", "rssi: %d", rssi);
+  return rssi;
 }
 /**
   * @brief Read Current RSSI value

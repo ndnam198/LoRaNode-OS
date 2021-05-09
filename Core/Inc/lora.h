@@ -452,7 +452,7 @@ uint16_t usValidPacketCntRead(void);
 uint8_t ucRxCodingRateRead(void);
 uint8_t ucModemStatusRead(void);
 int16_t PacketRssiRead(void);
-int16_t PacketStrength(void);
+int16_t getPktStrength(void);
 int8_t PacketSnrRead(void);
 uint8_t ucRssiRead(void);
 uint8_t ucPllTimeoutRead(void);
