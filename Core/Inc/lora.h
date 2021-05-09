@@ -469,7 +469,7 @@ void vAgcStep3Init(uint8_t ucAgcStep3);
 void vAgcStep4Init(uint8_t ucAgcStep4);
 void vAgcStep5Init(uint8_t ucAgcStep5);
 void vPllBandwidth(uint8_t ucPllBandwidth);
-void vLoraInit(void);
+void vLoraInit(LoRaInitTypeDef_t* conf);
 void vLoraTransmit(uint8_t* pcTxBuffer, bool isRepeat);
 void vLoraReceive(uint8_t* pcRxBuffer, bool isRepeat);
 uint16_t usLoRaGetPreamble(void);
