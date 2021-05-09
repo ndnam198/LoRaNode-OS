@@ -262,6 +262,29 @@ typedef enum OSCILLATOR_SOURCE
     TCXO_INPUT = 1u,
 } LoRaOsscSourceTypeDef_t;
 
+typedef struct 
+{
+    uint8_t Access_Shared_Reg;
+    uint8_t Access_Frequence_Mode;
+    uint32_t Rf_Frequency;
+    uint8_t Pa_Select;
+    uint8_t Output_Power;
+    uint8_t Ocp_Strim;
+    uint8_t Fifo_Tx_Base_Addr;
+    uint8_t Fifo_Rx_Base_Addr;
+    uint8_t Coding_Rate;
+    uint8_t Header_Mode;
+    uint8_t Spreading_Factor;
+    uint8_t Rx_Payload_Crc;
+    uint16_t Preamble_Length;
+    uint8_t Payload_Length;
+    uint8_t Detection_Optimize;
+    uint8_t Detection_Threshold;
+    uint8_t Crystal_Oscillator;
+    uint8_t Pa_Dac;
+} LoraConf_t;
+
+
 /* -------------------------------------------------------------------------- */
 /*                    Begin define registers of module Lora                   */
 /* -------------------------------------------------------------------------- */
@@ -428,7 +451,9 @@ uint16_t usValidHeaderCntRead(void);
 uint16_t usValidPacketCntRead(void);
 uint8_t ucRxCodingRateRead(void);
 uint8_t ucModemStatusRead(void);
-uint16_t ucPacketRssiRead(void);
+int16_t PacketRssiRead(void);
+int16_t PacketStrength(void);
+int8_t PacketSnrRead(void);
 uint8_t ucRssiRead(void);
 uint8_t ucPllTimeoutRead(void);
 uint8_t ucCrcOnPayloadread(void);
@@ -471,7 +496,7 @@ void vAgcStep3Init(uint8_t ucAgcStep3);
 void vAgcStep4Init(uint8_t ucAgcStep4);
 void vAgcStep5Init(uint8_t ucAgcStep5);
 void vPllBandwidth(uint8_t ucPllBandwidth);
-void vLoraInit(void);
+void vLoraInit(LoraConf_t LoraInit);
 void vLoraTransmit(uint8_t* pcTxBuffer, bool isRepeat);
 void vLoraReceive(uint8_t* pcRxBuffer, bool isRepeat);
 uint16_t usLoRaGetPreamble(void);
@@ -483,6 +508,7 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs);
 void LoRaReceiveCont(uint8_t* outData, uint8_t size, uint32_t timeoutMs);
 uint8_t LoRaGetITFlag(uint8_t irqFlag);
 void LoRaClearITFlag(uint8_t flag);
+int16_t GetRssi(uint8_t Frequency_Type);
 /* -------------------------- End private functions ------------------------- */
 
 #endif /* !_LORA_H_ */

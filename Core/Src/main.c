@@ -60,6 +60,26 @@ NodeTypedef_t thisNode = {
 };
 
 IWDG_HandleTypeDef hiwdg;
+LoraConf_t LoraInit = {
+  .Access_Shared_Reg = ACCESS_LORA_REGISTERS,
+  .Access_Frequence_Mode = ACCESS_LOW_FREQUENCY_MODE,
+  .Rf_Frequency = RF_FREQUENCY,
+  .Pa_Select = PA_BOOST,
+  .Output_Power = OUTPUT_POWER,
+  .Ocp_Strim = OCP_TRIM,
+  .Fifo_Tx_Base_Addr = FIFO_TX_BASE_ADDR,
+  .Fifo_Rx_Base_Addr = FIFO_RX_BASE_ADDR,
+  .Coding_Rate = CODING_RATE_4_5,
+  .Header_Mode = IMPLICIT_HEADER,
+  .Spreading_Factor = SPREADING_FACTOR_6_64,
+  .Rx_Payload_Crc = CRC_ENABLE,
+  .Preamble_Length = PREAMBLE_LENGTH,
+  .Payload_Length = PAYLOAD_LENGTH,
+  .Detection_Optimize = LORA_DETECTION_OPTIMIZE,
+  .Detection_Threshold = LORA_DETECTION_THRESHOLD,
+  .Crystal_Oscillator = XTAL_INPUT,
+  .Pa_Dac = PA_DAC,
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -118,6 +138,7 @@ int main(void)
   STM_LOGV("Main", "Location: {%d}", thisNode.location);
   STM_LOGV("Main", "Error:    {%s}", WHICH_RELAY_ERR(thisNode.errCode));
 
+  vLoraInit(LoraInit);
   /* USER CODE END 2 */
 
   /* Init scheduler */
