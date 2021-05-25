@@ -20,7 +20,7 @@
 
 #define USE_LORA_MODE               (1u)
 
-#define LORA_DELAY                  (1000u)
+#define LORA_DELAY                  (0xFFFFFFFF)
 #define LORA_MAX_DELAY              (0xFFFF)
 
 #define DELAY_SPI                   3u
@@ -36,8 +36,8 @@
 
 #define LORA_SET_FIFO_CURRENT_MSG() (vSpi1Write(RegFifoAddrPtr, ucSpi1Read(RegFifoRxCurrentAddr)))
 
-#define LORA_SYNC_WORD              0x12u
-#define PREAMBLE_LENGTH             0x0008u
+#define LORA_SYNC_WORD              0x34u
+#define PREAMBLE_LENGTH             0x0020u
 
 #define TX_NORMAL_MODE              0u
 #define RX_TIMEOUT                  0x0064u
@@ -64,7 +64,7 @@
 
 #define ACCESS_LORA_REGISTERS       0u
 #define ACCESS_LOW_FREQUENCY_MODE   1u
-#define RF_FREQUENCY                0x6C8000u
+#define RF_FREQUENCY                0x6C4000u   /* Frequency = 433 MHz */
 #define PA_BOOST                    1u   /* Selects PA output pin:  PA_BOOST pin */
 #define MAX_POWER                   7u
 #define OUTPUT_POWER                15u
@@ -273,6 +273,7 @@ typedef struct
     uint8_t Fifo_Tx_Base_Addr;
     uint8_t Fifo_Rx_Base_Addr;
     uint8_t Coding_Rate;
+    uint8_t Band_Width;
     uint8_t Header_Mode;
     uint8_t Spreading_Factor;
     uint8_t Rx_Payload_Crc;
@@ -347,6 +348,7 @@ typedef struct
 #define RegInvertIQ             0x33u   /* Invert LoRa I and Q signals */
 #define RegDetectionThreshold   0x37u   /* LoRa detection threshold for SF6 */
 #define RegSyncWord             0x39u   /* LoRa Sync Word */
+#define RegInvertIQ2            0x3Bu   /*  */
 /* ----------------------- /Registers for FSK/OOK Mode ---------------------- */
 #else   
 #define RegBitrateMsb       0x02u
@@ -496,7 +498,7 @@ void vAgcStep3Init(uint8_t ucAgcStep3);
 void vAgcStep4Init(uint8_t ucAgcStep4);
 void vAgcStep5Init(uint8_t ucAgcStep5);
 void vPllBandwidth(uint8_t ucPllBandwidth);
-void vLoraInit(LoraConf_t LoraInit);
+void vLoraInit(LoraConf_t* LoraInit);
 void vLoraTransmit(uint8_t* pcTxBuffer, bool isRepeat);
 void vLoraReceive(uint8_t* pcRxBuffer, bool isRepeat);
 uint16_t usLoRaGetPreamble(void);

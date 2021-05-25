@@ -16,8 +16,8 @@
   *
   ******************************************************************************
   */
-  /* USER CODE END Header */
-  /* Includes ------------------------------------------------------------------*/
+/* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
 #include "adc.h"
@@ -70,15 +70,16 @@ LoraConf_t LoraInit = {
   .Fifo_Tx_Base_Addr = FIFO_TX_BASE_ADDR,
   .Fifo_Rx_Base_Addr = FIFO_RX_BASE_ADDR,
   .Coding_Rate = CODING_RATE_4_5,
+  .Band_Width = BANDWIDTH_125K,
   .Header_Mode = IMPLICIT_HEADER,
-  .Spreading_Factor = SPREADING_FACTOR_6_64,
+  .Spreading_Factor = SPREADING_FACTOR_12_4096,
   .Rx_Payload_Crc = CRC_ENABLE,
   .Preamble_Length = PREAMBLE_LENGTH,
   .Payload_Length = PAYLOAD_LENGTH,
-  .Detection_Optimize = LORA_DETECTION_OPTIMIZE,
-  .Detection_Threshold = LORA_DETECTION_THRESHOLD,
-  .Crystal_Oscillator = XTAL_INPUT,
-  .Pa_Dac = PA_DAC,
+  .Detection_Optimize = 0x03,
+  .Detection_Threshold = 0x0A,
+  .Crystal_Oscillator = XTAL_INPUT, /* TCXO_INPUT XTAL_INPUT */
+  .Pa_Dac = PA_DAC
 };
 /* USER CODE END PV */
 
@@ -126,7 +127,8 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  vLoraInit();
+//  vLoraInit();
+  vLoraInit(&LoraInit);
   reset_cause_t resetCause = resetCauseGet();
   STM_LOGI("Main", "Reset cause:  {%s}", resetCauseGetName(resetCause));
   STM_LOGI("Main", "Watchdog Init {%ums}", iwdgInit(&hiwdg, WATCHDOG_TIME));
@@ -138,7 +140,6 @@ int main(void)
   STM_LOGV("Main", "Location: {%d}", thisNode.location);
   STM_LOGV("Main", "Error:    {%s}", WHICH_RELAY_ERR(thisNode.errCode));
 
-  vLoraInit(LoraInit);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -165,14 +166,14 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = { 0 };
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -186,8 +187,8 @@ void SystemClock_Config(void)
   }
   /** Initializes the CPU, AHB and APB buses clocks
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-    | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -248,7 +249,7 @@ void updateDataToFlash(void)
   * @param  htim : TIM handle
   * @retval None
   */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
 
@@ -284,12 +285,12 @@ void Error_Handler(void)
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t* file, uint32_t line)
+void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-     /* USER CODE END 6 */
+  /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
 

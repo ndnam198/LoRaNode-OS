@@ -16,9 +16,9 @@
   *
   ******************************************************************************
   */
-  /* USER CODE END Header */
+/* USER CODE END Header */
 
-  /* Includes ------------------------------------------------------------------*/
+/* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -56,26 +56,33 @@ extern NodeTypedef_t thisNode;
 extern uint32_t adcLightSensor;
 extern IWDG_HandleTypeDef hiwdg;
 /* USER CODE END Variables */
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .stack_size = 64 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* Definitions for taskProducer */
 osThreadId_t taskProducerHandle;
 const osThreadAttr_t taskProducer_attributes = {
   .name = "taskProducer",
   .stack_size = 1024 * 4,
-  .priority = (osPriority_t)osPriorityNormal,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for taskConsumer */
 osThreadId_t taskConsumerHandle;
 const osThreadAttr_t taskConsumer_attributes = {
   .name = "taskConsumer",
   .stack_size = 1024 * 4,
-  .priority = (osPriority_t)osPriorityBelowNormal,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for taskPeriodic */
 osThreadId_t taskPeriodicHandle;
 const osThreadAttr_t taskPeriodic_attributes = {
   .name = "taskPeriodic",
   .stack_size = 256 * 4,
-  .priority = (osPriority_t)osPriorityLow4,
+  .priority = (osPriority_t) osPriorityLow4,
 };
 /* Definitions for myQueue01 */
 osMessageQueueId_t myQueue01Handle;
@@ -102,10 +109,10 @@ static void opcodeMcuReset(void);
 static void opcodeLocationUpdate(uint8_t newLocation, uint8_t seqID);
 /* USER CODE END FunctionPrototypes */
 
-void StartDefaultTask(void* argument);
-void entryProducer(void* argument);
-void entryConsumer(void* argument);
-void entryPeriodic(void* argument);
+void StartDefaultTask(void *argument);
+void entryProducer(void *argument);
+void entryConsumer(void *argument);
+void entryPeriodic(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -146,7 +153,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the semaphores(s) */
   /* creation of rxDoneSemaphore */
-  rxDoneSemaphoreHandle = osSemaphoreNew(5, 0, &rxDoneSemaphore_attributes);
+  rxDoneSemaphoreHandle = osSemaphoreNew(5, 5, &rxDoneSemaphore_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   if (rxDoneSemaphoreHandle == NULL)
@@ -158,7 +165,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of myQueue01 */
-  myQueue01Handle = osMessageQueueNew(10, sizeof(uint8_t) * 10, &myQueue01_attributes);
+  myQueue01Handle = osMessageQueueNew (10, 10, &myQueue01_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   if (myQueue01Handle == NULL)
@@ -167,6 +174,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of taskProducer */
   taskProducerHandle = osThreadNew(entryProducer, NULL, &taskProducer_attributes);
@@ -192,6 +201,24 @@ void MX_FREERTOS_Init(void) {
 
 }
 
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+  /* USER CODE BEGIN StartDefaultTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartDefaultTask */
+}
+
 /* USER CODE BEGIN Header_entryProducer */
 /**
 * @brief Function implementing the taskProducer thread.
@@ -199,7 +226,7 @@ void MX_FREERTOS_Init(void) {
 * @retval None
 */
 /* USER CODE END Header_entryProducer */
-void entryProducer(void* argument)
+void entryProducer(void *argument)
 {
   /* USER CODE BEGIN entryProducer */
   osStatus_t err;
@@ -262,7 +289,7 @@ void entryProducer(void* argument)
 * @retval None
 */
 /* USER CODE END Header_entryConsumer */
-void entryConsumer(void* argument)
+void entryConsumer(void *argument)
 {
   /* USER CODE BEGIN entryConsumer */
   static uint8_t receivedMsgFromQueue[PAYLOAD_LENGTH];
@@ -301,8 +328,8 @@ void entryConsumer(void* argument)
       updateDataToFlash();
     }
   }
+  /* USER CODE END entryConsumer */
 }
-/* USER CODE END entryConsumer */
 
 /* USER CODE BEGIN Header_entryPeriodic */
 /**
@@ -311,7 +338,7 @@ void entryConsumer(void* argument)
 * @retval None
 */
 /* USER CODE END Header_entryPeriodic */
-void entryPeriodic(void* argument)
+void entryPeriodic(void *argument)
 {
   /* USER CODE BEGIN entryPeriodic */
   static const uint32_t tickToWait = pdMS_TO_TICKS(1000);

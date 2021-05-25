@@ -23,7 +23,7 @@ enum MSG_INDEX
     INDEX_DATA_LOCATION = 5u,      /* Data field, refer to @DATA_LOCATION enumeration */
     INDEX_DATA_RELAY_STATE = 6u,   /* Data field, either On or Off */
     INDEX_DATA_ERR_CODE = 7u,      /* Data field, refer to @DATA_ERR_CODE */
-    INDEX_COMMAND_OPCODE = 8u,             /* Specify command by OPCODE, refer @OPCODE*/
+    INDEX_COMMAND_OPCODE = 8u,     /* Specify command by OPCODE, refer @OPCODE*/
     INDEX_RESET_CAUSE = 9u,        /* Data field, refer to @reset_cause in misc.h */
     INDEX_PACKET_RSSI = 9u,
     INDEX_MAX = 10u,
@@ -114,7 +114,7 @@ msg[INDEX_DATA_LOCATION]    = node.location;            \
 msg[INDEX_DATA_RELAY_STATE] = node.relayState;          \
 msg[INDEX_DATA_ERR_CODE]    = node.errCode;             \
 msg[INDEX_COMMAND_OPCODE]   = opcode;                   \
-msg[INDEX_PACKET_RSSI]      = getPktStrength();         \
+msg[INDEX_PACKET_RSSI]      = 0;         \
 } while (0)
 
 #define PACK_NOTIF_MSG(msg, node, resetCause)\
@@ -131,4 +131,4 @@ msg[INDEX_COMMAND_OPCODE]   = 0;                  \
 msg[INDEX_RESET_CAUSE]      = resetCause ;        \
 } while (0)
 
-#endif /* !__DATA_FORMAT_H */>
+#endif /* !__DATA_FORMAT_H */

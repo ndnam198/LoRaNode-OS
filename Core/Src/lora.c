@@ -1093,7 +1093,7 @@ void vPllBandwidth(uint8_t ucPllBandwidth)
   * @param: None
   * @retval: None
   */
-void vLoraInit(LoraConf_t LoraInit)
+void vLoraInit(LoraConf_t* LoraInit)
 {
 
   STM_LOGD("LoRa", "LoRa init");
@@ -1102,63 +1102,65 @@ void vLoraInit(LoraConf_t LoraInit)
   // LORA_GET_REGISTER(RegOpMode);
 
   vModeInit(STDBY_MODE);                              /* Init Module Lora into Standby Mode */
-  vAccessSharedRegInit(LoraInit.Access_Shared_Reg);        /* Access LoRa registers page 0x0D: 0x3F */
-  vLowFrequencyModeOnInit(LoraInit.Access_Frequence_Mode); /* Access Low Frequency Mode registers */
+  vAccessSharedRegInit(LoraInit->Access_Shared_Reg);        /* Access LoRa registers page 0x0D: 0x3F */
+  vLowFrequencyModeOnInit(LoraInit->Access_Frequence_Mode); /* Access Low Frequency Mode registers */
   // LORA_GET_REGISTER(RegOpMode);
 
-  vFrfInit(LoraInit.Rf_Frequency); /*  Init RF carrier frequency */
+  vFrfInit(LoraInit->Rf_Frequency); /*  Init RF carrier frequency */
   // LORA_GET_REGISTER(RegFrfMsb);
   // LORA_GET_REGISTER(RegFrfMid);
   // LORA_GET_REGISTER(RegFrfLsb);
 
-  vPaSelectInit(LoraInit.Pa_Select); /* Output power is limited to +20 dBm */
+  vPaSelectInit(LoraInit->Pa_Select); /* Output power is limited to +20 dBm */
   // vMaxPowerInit(MAX_POWER);
-  vOutputPowerInit(LoraInit.Output_Power); /* Pout=17-(15-OutputPower) */
+  vOutputPowerInit(LoraInit->Output_Power); /* Pout=17-(15-OutputPower) */
   // LORA_GET_REGISTER(RegPaConfig);
 
-  // vPaRampInit(PA_RAMP);
+  vPaRampInit(PA_RAMP);
   // LORA_GET_REGISTER(RegPaRamp);
 
   // vOcpOnInit(OCP_ON); /* OCP enabled */
-  vOcpTrimInit(LoraInit.Ocp_Strim); /* Trimming of OCP current: Imax = 240mA */
+  vOcpTrimInit(LoraInit->Ocp_Strim); /* Trimming of OCP current: Imax = 240mA */
   // LORA_GET_REGISTER(RegOcp);
 
   // vLnaGainInit(G1); /* LNA gain setting: G1 = maximum gain */
+  // LORA_GET_REGISTER(RegLna);
   // vLnaBoostLfInit(LNA_BOOST_LF); /* Low Frequency (RFI_LF) LNA current adjustment Default LNA current */
   // vLnaBoostHfInit(LNA_BOOST_HF); /* High Frequency (RFI_HF) LNA current adjustment Boost on, 150% LNA current */
   // LORA_GET_REGISTER(RegLna);
 
-  vFifoTxBaseAddrInit(LoraInit.Fifo_Tx_Base_Addr); /* Write base address in FIFO data buffer for TX modulator */
+  vFifoTxBaseAddrInit(LoraInit->Fifo_Tx_Base_Addr); /* Write base address in FIFO data buffer for TX modulator */
   // LORA_GET_REGISTER(RegFifoTxBaseAddr);
 
-  vFifoRxBaseAddrInit(LoraInit.Fifo_Rx_Base_Addr); /* Read base address in FIFO data buffer for RX demodulator */
+  vFifoRxBaseAddrInit(LoraInit->Fifo_Rx_Base_Addr); /* Read base address in FIFO data buffer for RX demodulator */
   // LORA_GET_REGISTER(RegFifoRxBaseAddr);
 
   // vIrqFlagsMaskInit(IRQ_FLAGS_MASK); /* Disable all interrupts mask */
   // LORA_GET_REGISTER(RegIrqFlagsMask);
 
   // vBandWidthInit(BANDWIDTH_125K); /*  Signal bandwidth: BANDWIDTH_125K */
-  vCodingRateInit(LoraInit.Coding_Rate); /* ANCHOR Error coding rate 4/5 */
+  vCodingRateInit(LoraInit->Coding_Rate); /* ANCHOR Error coding rate 4/5 */
 
-  // vBandWidthInit(BANDWIDTH_125K);
+  vBandWidthInit(LoraInit->Band_Width);
   // vCodingRateInit(CODING_RATE_4_5);
-  vImplicitHeaderModeOnInit(LoraInit.Header_Mode); /* ANCHOR Init Implicit Header mode */
+  vImplicitHeaderModeOnInit(LoraInit->Header_Mode); /* ANCHOR Init Implicit Header mode */
   // LORA_GET_REGISTER(RegModemConfig1);
 
-  vSpreadingFactorInit(LoraInit.Spreading_Factor); /* ANCHOR SF rate 64 chips / symbol */
+  vSpreadingFactorInit(LoraInit->Spreading_Factor); /* ANCHOR SF rate 64 chips / symbol */
+  // LORA_GET_REGISTER(RegModemConfig2);
   // vTxContinuousModeInit(TX_SINGLE); /* ANCHOR Normal mode, a single packet is sent */
-  vRxPayloadCrcOnInit(LoraInit.Rx_Payload_Crc); /* ANCHOR Enable CRC generation and check on payload */
+  vRxPayloadCrcOnInit(LoraInit->Rx_Payload_Crc); /* ANCHOR Enable CRC generation and check on payload */
   // LORA_GET_REGISTER(RegModemConfig2);
 
   // vSymbTimeoutInit(RX_TIMEOUT); /* ANCHOR RX operation time-out */
   // // LORA_GET_REGISTER(RegModemConfig2);
   // // LORA_GET_REGISTER(RegSymbTimeoutLsb);
 
-  vPreambleLengthInit(LoraInit.Preamble_Length); /* ANCHOR Preamble length = PreambleLength + 4.25 Symbols */
+  vPreambleLengthInit(LoraInit->Preamble_Length); /* ANCHOR Preamble length = PreambleLength + 4.25 Symbols */
   // // LORA_GET_REGISTER(RegPreambleMsb);
   // // LORA_GET_REGISTER(RegPreambleLsb);
 
-  vPayloadLengthInit(LoraInit.Payload_Length); /*  Init Payload length */
+  vPayloadLengthInit(LoraInit->Payload_Length); /*  Init Payload length */
   // LORA_GET_REGISTER(RegPayloadLength);
 
   // vPayloadMaxLengthInit(PAYLOAD_MAX_LENGTH); /* ANCHOR Maximum payload length */
@@ -1167,20 +1169,33 @@ void vLoraInit(LoraConf_t LoraInit)
   // vFreqHoppingPeriodInit(FREQ_HOPPING_PERIOD); /* Symbol periods between frequency hops */
   // // LORA_GET_REGISTER(RegHopPeriod);
 
-  // vLowDataRateOptimizeInit(LOW_DATA_RATE_OPTIMIZE); /*  Enabled; mandated for when the symbol length exceeds16ms */
+  vLowDataRateOptimizeInit(LOW_DATA_RATE_OPTIMIZE); /* Enabled; mandated for when the symbol length exceeds16ms */
   // vAgcAutoOnInit(AGC_AUTO); /* 0 -> LNA gain set by register LnaGain 1 -> LNA gain set by the internal AGC loop*/
   // // LORA_GET_REGISTER(RegModemConfig3);
 
-  vDetectionOptimizeInit(LoraInit.Detection_Optimize); /* LoRa Detection Optimize 0x03 -> SF7 to SF12; 0x05 -> SF6 */
+
+
+
+
+
+
+  vDetectionOptimizeInit(LoraInit->Detection_Optimize); /* LoRa Detection Optimize 0x03 -> SF7 to SF12; 0x05 -> SF6 */
   // LORA_GET_REGISTER(RegDetectOptimize);
 
   // vInvertIQInit(INVERT_IQ); /* ANCHOR Invert the LoRa I and Q signals */
   // // LORA_GET_REGISTER(RegInvertIQ);
 
-  vDetectionThresholdInit(LoraInit.Detection_Threshold); /* ANCHOR LoRa detection threshold 0x0A -> SF7 to SF12; 0x0C -> SF6 */
+
+
+
+
+
+
+  vDetectionThresholdInit(LoraInit->Detection_Threshold); /* ANCHOR LoRa detection threshold 0x0A -> SF7 to SF12; 0x0C -> SF6 */
   // LORA_GET_REGISTER(RegDetectionThreshold);
 
   // vSyncWordInit(LORA_SYNC_WORD); /* ANCHOR Init Sync Word */
+
   // LORA_GET_REGISTER(RegSyncWord);
 
   // vAgcReferenceLevelInit(AGC_REFERENCE); /* Sets the floor reference for all AGC thresholds */
@@ -1211,19 +1226,23 @@ void vLoraInit(LoraConf_t LoraInit)
   // // LORA_GET_REGISTER(RegTcxo);
   // printf("RegTcxo = 0x%x\r\n", ucData);
 
-  vTcxoInputOnInit(LoraInit.Crystal_Oscillator); /* ANCHOR Controls the crystal oscillator */
+  vTcxoInputOnInit(LoraInit->Crystal_Oscillator); /* ANCHOR Controls the crystal oscillator */
   // LORA_GET_REGISTER(RegTcxo);
 
-  vPaDacInit(LoraInit.Pa_Dac); /* Enables the +20dBm option on PA_BOOST pin */
+  vPaDacInit(LoraInit->Pa_Dac); /* Enables the +20dBm option on PA_BOOST pin */
   // LORA_GET_REGISTER(RegPaDac);
   // LORA_GET_REGISTER(RegLna);
   // LORA_GET_REGISTER(RegVersion);
   // LORA_GET_REGISTER(RegOpMode);
   LORA_GET_REGISTER(RegVersion);
-
+  // LORA_GET_REGISTER(0x3B);
+  // vSpi1Write(0x3B, 0xAA);
+  // LORA_GET_REGISTER(0x3B);
   /* Reset Rx Pointer */
   vModeInit(STDBY_MODE);
   vModeInit(RXCONTINUOUS_MODE);
+  // LORA_GET_REGISTER(RegOpMode);
+
 }
 
 
@@ -1257,6 +1276,7 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs)
 {
   bool isTransmitOk = true;
   vModeInit(STDBY_MODE);
+LORA_GET_REGISTER(RegOpMode);
 
   /* STANDBY MODE */
   vSpi1Write(RegFifoAddrPtr, FIFO_TX_BASE_ADDR); /* Set FifoPtrAddr to FifoTxPtrBase */
@@ -1283,13 +1303,16 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs)
     vSpi1Write(RegFifo, *(data + i));
   }
   /* MODE REQUEST TX */
+  HAL_Delay(10);
   vModeInit(TX_MODE);
+  LORA_GET_REGISTER(RegOpMode);
   uint32_t startTick = HAL_GetTick();
   STM_LOGV("LoRaTX", "Wait for TX_DONE ...\r\n");
   while ((ucSpi1Read(RegIrqFlags) & TX_DONE_Msk) >> TX_DONE_MskPos == 0u)
   {
     if (HAL_GetTick() - startTick >= timeoutMs)
     {
+      LORA_GET_REGISTER(RegIrqFlags);
       STM_LOGE("LoRaTX", "TX_TIMEOUT");
       isTransmitOk = false;
       break;

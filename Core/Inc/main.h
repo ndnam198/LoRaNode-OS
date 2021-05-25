@@ -17,9 +17,9 @@
   *
   ******************************************************************************
   */
-  /* USER CODE END Header */
+/* USER CODE END Header */
 
-  /* Define to prevent recursive inclusion -------------------------------------*/
+/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_H
 #define __MAIN_H
 
@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-  /* Includes ------------------------------------------------------------------*/
+/* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -56,13 +56,13 @@ extern "C" {
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
-  void Error_Handler(void);
+void Error_Handler(void);
 
-  /* USER CODE BEGIN EFP */
+/* USER CODE BEGIN EFP */
 void updateDataToFlash(void);
-  /* USER CODE END EFP */
+/* USER CODE END EFP */
 
-  /* Private defines -----------------------------------------------------------*/
+/* Private defines -----------------------------------------------------------*/
 #define LIGHT_SENSOR_OUTPUT_Pin GPIO_PIN_0
 #define LIGHT_SENSOR_OUTPUT_GPIO_Port GPIOA
 #define RELAY_OUTPUT_Pin GPIO_PIN_1
