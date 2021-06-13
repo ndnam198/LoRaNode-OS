@@ -16,9 +16,9 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
+  /* USER CODE END Header */
 
-/* Includes ------------------------------------------------------------------*/
+  /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -44,6 +44,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define PRODUCER_TAG  "PRODUCER"
+#define CONSUMER_TAG  "CONSUMER"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,28 +63,28 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 64 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t)osPriorityNormal,
 };
 /* Definitions for taskProducer */
 osThreadId_t taskProducerHandle;
 const osThreadAttr_t taskProducer_attributes = {
   .name = "taskProducer",
   .stack_size = 1024 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t)osPriorityNormal,
 };
 /* Definitions for taskConsumer */
 osThreadId_t taskConsumerHandle;
 const osThreadAttr_t taskConsumer_attributes = {
   .name = "taskConsumer",
   .stack_size = 1024 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal,
+  .priority = (osPriority_t)osPriorityBelowNormal,
 };
 /* Definitions for taskPeriodic */
 osThreadId_t taskPeriodicHandle;
 const osThreadAttr_t taskPeriodic_attributes = {
   .name = "taskPeriodic",
   .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityLow4,
+  .priority = (osPriority_t)osPriorityLow4,
 };
 /* Definitions for myQueue01 */
 osMessageQueueId_t myQueue01Handle;
@@ -109,10 +111,10 @@ static void opcodeMcuReset(void);
 static void opcodeLocationUpdate(uint8_t newLocation, uint8_t seqID);
 /* USER CODE END FunctionPrototypes */
 
-void StartDefaultTask(void *argument);
-void entryProducer(void *argument);
-void entryConsumer(void *argument);
-void entryPeriodic(void *argument);
+void StartDefaultTask(void* argument);
+void entryProducer(void* argument);
+void entryConsumer(void* argument);
+void entryPeriodic(void* argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -165,7 +167,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of myQueue01 */
-  myQueue01Handle = osMessageQueueNew (10, 10, &myQueue01_attributes);
+  myQueue01Handle = osMessageQueueNew(10, 10, &myQueue01_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   if (myQueue01Handle == NULL)
@@ -207,12 +209,12 @@ void MX_FREERTOS_Init(void) {
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+  /* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void* argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
     osDelay(1);
   }
@@ -226,54 +228,69 @@ void StartDefaultTask(void *argument)
 * @retval None
 */
 /* USER CODE END Header_entryProducer */
-void entryProducer(void *argument)
+void entryProducer(void* argument)
 {
   /* USER CODE BEGIN entryProducer */
   osStatus_t err;
-  uint8_t receivedMsg[10];
+  uint8_t receivedMsg[PAYLOAD_LENGTH];
   uint32_t tickToWait = pdMS_TO_TICKS(5000);
   /* Infinite loop */
   for (;;)
   {
     err = osSemaphoreAcquire(rxDoneSemaphoreHandle, portMAX_DELAY);
     if (!err) {
-      TOGGLE_LED();
-      STM_LOGV("Producer", "Get semaphore ok");
+      vModeInit(STDBY_MODE);
+      STM_LOGV(PRODUCER_TAG, "Get semaphore ok");
 
       if (LoRaGetITFlag(PAYLOAD_CRC_ERROR_MskPos) == 1)
       {
-        STM_LOGE("Producer", "Payload CRC failed");
+        STM_LOGE(PRODUCER_TAG, "Payload CRC failed");
+        vModeInit(RXCONTINUOUS_MODE);
       }
       else
       {
         LORA_SET_FIFO_CURRENT_MSG();
         for (uint8_t i = 0; i < PAYLOAD_LENGTH; i++) {
           receivedMsg[i] = ucSpi1Read(RegFifo);
-          // STM_LOGI("Producer", "receivedData[%d]: %x", i, receivedMsg[i]);
+          // STM_LOGI(PRODUCER_TAG, "receivedData[%d]: %x", i, receivedMsg[i]);
         }
 
-        STM_LOGI("Producer", "msg dest ID: %x - thisNodeID: %x", receivedMsg[INDEX_DEST_ID], thisNode.nodeID);
-        if (receivedMsg[INDEX_DEST_ID] == thisNode.nodeID &&
-          receivedMsg[INDEX_MSG_TYPE] == MSG_TYPE_REQUEST)
+        STM_LOGI(PRODUCER_TAG, "msg source ID: %d - msg dest ID: %d - thisNodeID: %d", receivedMsg[INDEX_SOURCE_ID], receivedMsg[INDEX_DEST_ID], thisNode.nodeID);
+        if (receivedMsg[INDEX_DEST_ID] == thisNode.nodeID && receivedMsg[INDEX_MSG_TYPE] == MSG_TYPE_REQUEST && receivedMsg[INDEX_SOURCE_ID] == GATEWAY_ADDRESS)
         {
-
-          STM_LOGV("Producer", "put queue");
           err = osMessageQueuePut(myQueue01Handle, receivedMsg, 0, tickToWait);
           if (!err)
           {
-            STM_LOGV("Producer", "put queue ok");
+            LED_ON();
+            STM_LOGV(PRODUCER_TAG, "enqueue ok");
           }
           else
           {
-            STM_LOGE("Producer", "put queue failed, err %d\n\r NbOfMsg in queue : % d\n\ravailable size : % d", \
+            STM_LOGE(PRODUCER_TAG, "enqueue failed, err %d\n\r NbOfMsg in queue : % d\n\ravailable size : % d", \
               err, \
               osMessageQueueGetCount(myQueue01Handle), \
               osMessageQueueGetSpace(myQueue01Handle));
           }
         }
+        else if (thisNode.meshNodeID != UNUSED_ADDRESS)
+        {
+          if (receivedMsg[INDEX_DEST_ID] == thisNode.meshNodeID && receivedMsg[INDEX_MSG_TYPE] == MSG_TYPE_REQUEST && receivedMsg[INDEX_SOURCE_ID] == GATEWAY_ADDRESS)
+          {
+            STM_LOGD(PRODUCER_TAG, "---> forward GATEWAY msg to MESH NODE");
+            receivedMsg[INDEX_SOURCE_ID] = THIS_NODE_ADDRESS;
+            LoRaTransmit(receivedMsg, PAYLOAD_LENGTH, LORA_DELAY);
+          }
+          else if (receivedMsg[INDEX_SOURCE_ID] == thisNode.meshNodeID && receivedMsg[INDEX_DEST_ID] == thisNode.nodeID)
+          {
+            STM_LOGD(PRODUCER_TAG, "---> forward MESH NODE msg to GATEWAY");
+            receivedMsg[INDEX_DEST_ID] = GATEWAY_ADDRESS;
+            LoRaTransmit(receivedMsg, PAYLOAD_LENGTH, LORA_DELAY);
+          }
+        }
         else
         {
-          STM_LOGV("Producer", "msg not matched --> dicarded");
+          STM_LOGV(PRODUCER_TAG, "msg not matched --> dicarded");
+          vModeInit(RXCONTINUOUS_MODE);
         }
       }
       LoRaClearITFlag(RX_DONE_Msk | PAYLOAD_CRC_ERROR_Msk);
@@ -289,7 +306,7 @@ void entryProducer(void *argument)
 * @retval None
 */
 /* USER CODE END Header_entryConsumer */
-void entryConsumer(void *argument)
+void entryConsumer(void* argument)
 {
   /* USER CODE BEGIN entryConsumer */
   static uint8_t receivedMsgFromQueue[PAYLOAD_LENGTH];
@@ -301,9 +318,8 @@ void entryConsumer(void *argument)
     if (!err)
     {
       printf("\r\n");
-      STM_LOGV("Consumer", "Get queue ok");
-      STM_LOGI("Consumer", "-----> OPCODE: %d", receivedMsgFromQueue[INDEX_COMMAND_OPCODE]);
-      vModeInit(STDBY_MODE);
+      STM_LOGV(CONSUMER_TAG, "Dequeue ok");
+      STM_LOGI(CONSUMER_TAG, "Request opcode: %d", receivedMsgFromQueue[INDEX_COMMAND_OPCODE]);
       switch (receivedMsgFromQueue[INDEX_COMMAND_OPCODE])
       {
       case OPCODE_REQUEST_STATE:
@@ -314,19 +330,18 @@ void entryConsumer(void *argument)
         break;
       case OPCODE_REQUEST_MCU_RESET:
         opcodeMcuReset();
-        updateDataToFlash();
         break;
       case OPCODE_REQUEST_LOCATION_UPDATE:
         opcodeLocationUpdate(receivedMsgFromQueue[INDEX_DATA_LOCATION], receivedMsgFromQueue[INDEX_SEQUENCE_ID]);
         break;
       default:
-        STM_LOGE("Consumer", "No service for opcode %d", receivedMsgFromQueue[INDEX_COMMAND_OPCODE]);
+        STM_LOGE(CONSUMER_TAG, "Opcode not found %d", receivedMsgFromQueue[INDEX_COMMAND_OPCODE]);
         break;
       }
 
-      // LED_OFF();
-      vModeInit(RXCONTINUOUS_MODE);
+      LED_OFF();
       updateDataToFlash();
+      vModeInit(RXCONTINUOUS_MODE);
     }
   }
   /* USER CODE END entryConsumer */
@@ -339,14 +354,14 @@ void entryConsumer(void *argument)
 * @retval None
 */
 /* USER CODE END Header_entryPeriodic */
-void entryPeriodic(void *argument)
+void entryPeriodic(void* argument)
 {
   /* USER CODE BEGIN entryPeriodic */
-  static const uint32_t tickToWait = pdMS_TO_TICKS(1000);
+  static const uint32_t tickToWait = pdMS_TO_TICKS(5000);
   /* Infinite loop */
   for (;;)
   {
-    TOGGLE_LED();
+    // TOGGLE_LED();
     HAL_IWDG_Refresh(&hiwdg);
     osDelay(tickToWait);
   }
@@ -357,26 +372,26 @@ void entryPeriodic(void *argument)
 /* USER CODE BEGIN Application */
 static void opcodeInquiry(uint8_t seqID)
 {
-  uint8_t msg[10];
+  uint8_t msg[PAYLOAD_LENGTH];
   PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_STATE);
   LoRaTransmit(msg, PAYLOAD_LENGTH, LORA_DELAY);
 }
 
 static void opcodeRelayControl(uint8_t newState, uint8_t seqID)
 {
-  uint8_t msg[10];
+  uint8_t msg[PAYLOAD_LENGTH];
   uint8_t countCheck = 0;
   bool isAck = false;
   bool isChecking = true;
   if (thisNode.relayState != newState)
   {
-    STM_LOGI("Consumer", "State changes: {%s} to {%s}", WHICH_RELAY(thisNode.relayState), WHICH_RELAY(newState));
+    STM_LOGI(CONSUMER_TAG, "State changes: {%s} to {%s}", WHICH_RELAY(thisNode.relayState), WHICH_RELAY(newState));
     thisNode.relayState = newState;
     RELAY_CONTROL(thisNode.relayState);
-    STM_LOGV("Consumer", "Checking relay ...");
+    STM_LOGV(CONSUMER_TAG, "Checking relay ...");
     ADC_READ_LIGHTSENSOR();
-    while (isChecking && ++countCheck <= 70) {
-      STM_LOGD("Consumer", "adcLightSensor: %d - count: %d", adcLightSensor, countCheck);
+    while (isChecking && ++countCheck <= NB_OF_RELAY_CHECK) {
+      STM_LOGD(CONSUMER_TAG, "adcLightSensor: %d - count: %d", adcLightSensor, countCheck);
 
       if (((adcLightSensor < LIGHTSENSOR_THRESHOLD) && (thisNode.relayState == RELAY_STATE_ON)) ||
         ((adcLightSensor >= LIGHTSENSOR_THRESHOLD) && (thisNode.relayState == RELAY_STATE_OFF)))
@@ -384,10 +399,10 @@ static void opcodeRelayControl(uint8_t newState, uint8_t seqID)
         isChecking = false;
         isAck = true;
         thisNode.errCode = ERR_CODE_NONE;
-        STM_LOGD("Consumer", "----> check ok ");
+        STM_LOGD(CONSUMER_TAG, "----> check ok ");
       }
-      else if (countCheck == 70) {
-        STM_LOGE("Consumer", "----> check failed");
+      else if (countCheck == NB_OF_RELAY_CHECK) {
+        STM_LOGE(CONSUMER_TAG, "----> check failed");
         isAck = false;
         thisNode.errCode = (thisNode.relayState == RELAY_STATE_ON) ? ERR_CODE_LIGHT_ON_FAILED : ERR_CODE_LIGHT_OFF_FAILED;
         thisNode.relayState = !thisNode.relayState;
@@ -396,7 +411,7 @@ static void opcodeRelayControl(uint8_t newState, uint8_t seqID)
       else {
         ADC_READ_LIGHTSENSOR();
         osDelay(10);
-        STM_LOGD("Consumer", "----> check again");
+        STM_LOGD(CONSUMER_TAG, "----> check again");
       }
     }
   }
@@ -404,7 +419,7 @@ static void opcodeRelayControl(uint8_t newState, uint8_t seqID)
   {
     isAck = true;
     thisNode.errCode = ERR_CODE_NONE;
-    STM_LOGV("Consumer", "----> already %s", WHICH_RELAY(thisNode.relayState));
+    STM_LOGV(CONSUMER_TAG, "----> already %s", WHICH_RELAY(thisNode.relayState));
   }
 
   if (isAck) {
@@ -418,22 +433,22 @@ static void opcodeRelayControl(uint8_t newState, uint8_t seqID)
 
 static void opcodeMcuReset(void)
 {
-  STM_LOGV("Consumer", "Perform self reset");
+  STM_LOGV(CONSUMER_TAG, "Perform self reset");
   NVIC_SystemReset();
 }
 
 static void opcodeLocationUpdate(uint8_t newLocation, uint8_t seqID)
 {
-  uint8_t msg[10];
+  uint8_t msg[PAYLOAD_LENGTH];
   if (newLocation != LOCATION_NONE)
   {
     thisNode.location = newLocation;
-    STM_LOGV("Consumer", "----> Update location %d", newLocation);
+    STM_LOGV(CONSUMER_TAG, "----> Update location %d", newLocation);
     PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_LOCATION_UPDATE);
   }
   else
   {
-    STM_LOGV("Consumer", "Invalid data %d", newLocation);
+    STM_LOGV(CONSUMER_TAG, "Invalid data %d", newLocation);
     PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_FAILED, seqID, OPCODE_RESPOSNE_LOCATION_UPDATE);
   }
   LoRaTransmit(msg, PAYLOAD_LENGTH, LORA_DELAY);

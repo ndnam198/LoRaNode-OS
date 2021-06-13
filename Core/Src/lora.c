@@ -1172,24 +1172,12 @@ void vLoraInit(LoraConf_t* LoraInit)
   vLowDataRateOptimizeInit(LOW_DATA_RATE_OPTIMIZE); /* Enabled; mandated for when the symbol length exceeds16ms */
   // vAgcAutoOnInit(AGC_AUTO); /* 0 -> LNA gain set by register LnaGain 1 -> LNA gain set by the internal AGC loop*/
   // // LORA_GET_REGISTER(RegModemConfig3);
-
-
-
-
-
-
-
+  
   vDetectionOptimizeInit(LoraInit->Detection_Optimize); /* LoRa Detection Optimize 0x03 -> SF7 to SF12; 0x05 -> SF6 */
   // LORA_GET_REGISTER(RegDetectOptimize);
 
   // vInvertIQInit(INVERT_IQ); /* ANCHOR Invert the LoRa I and Q signals */
   // // LORA_GET_REGISTER(RegInvertIQ);
-
-
-
-
-
-
 
   vDetectionThresholdInit(LoraInit->Detection_Threshold); /* ANCHOR LoRa detection threshold 0x0A -> SF7 to SF12; 0x0C -> SF6 */
   // LORA_GET_REGISTER(RegDetectionThreshold);
@@ -1276,7 +1264,7 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs)
 {
   bool isTransmitOk = true;
   vModeInit(STDBY_MODE);
-LORA_GET_REGISTER(RegOpMode);
+  LORA_GET_REGISTER(RegOpMode);
 
   /* STANDBY MODE */
   vSpi1Write(RegFifoAddrPtr, FIFO_TX_BASE_ADDR); /* Set FifoPtrAddr to FifoTxPtrBase */

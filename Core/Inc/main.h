@@ -32,8 +32,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#define THIS_NODE_ADDRESS  NODE1_ADDRESS
-#define THIS_NODE_LOCATION LOCATION_GIAI_PHONG_1
+#define NB_OF_RELAY_CHECK  (50u)
 #define ADDR_RELAY_STATE   ADDR_FLASH_PAGE_55
 #define ADDR_LOCATION      ADDR_FLASH_PAGE_55+4
 #define ADDR_ERROR_CODE    ADDR_FLASH_PAGE_55+8
@@ -100,8 +99,8 @@ extern "C" {
     }                                                              \
   } while (0)
 #define TOGGLE_LED()         (HAL_GPIO_TogglePin(LED_OUTPUT_GPIO_Port, LED_OUTPUT_Pin))
-#define LED_ON()          (HAL_GPIO_WritePin(LED_OUTPUT_GPIO_Port, LED_OUTPUT_Pin, 0))
-#define LED_OFF()         (HAL_GPIO_WritePin(LED_OUTPUT_GPIO_Port, LED_OUTPUT_Pin, 1))
+#define LED_ON()             (HAL_GPIO_WritePin(LED_OUTPUT_GPIO_Port, LED_OUTPUT_Pin, 0))
+#define LED_OFF()            (HAL_GPIO_WritePin(LED_OUTPUT_GPIO_Port, LED_OUTPUT_Pin, 1))
 #define RELAY_CONTROL(state) (HAL_GPIO_WritePin(RELAY_OUTPUT_GPIO_Port, RELAY_OUTPUT_Pin, state))
 #define RELAY_GET_STATE()    (HAL_GPIO_ReadPin(RELAY_OUTPUT_GPIO_Port, RELAY_OUTPUT_Pin))
 /* USER CODE END Private defines */

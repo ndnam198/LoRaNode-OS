@@ -41,7 +41,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define MAIN_TAG  "MAIN"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,6 +57,7 @@ NodeTypedef_t thisNode = {
   .location = THIS_NODE_LOCATION,
   .relayState = RELAY_STATE_OFF,
   .errCode = ERR_CODE_NONE,
+  .meshNodeID = MESH_NODE_ADDRESS,
 };
 
 IWDG_HandleTypeDef hiwdg;
@@ -70,7 +71,6 @@ LoraConf_t LoraInit = {
   .Fifo_Tx_Base_Addr = FIFO_TX_BASE_ADDR,
   .Fifo_Rx_Base_Addr = FIFO_RX_BASE_ADDR,
   .Coding_Rate = CODING_RATE_4_5,
-  // .Band_Width = BANDWIDTH_125K,
   .Band_Width = BANDWIDTH_62K5,
   .Header_Mode = IMPLICIT_HEADER,
   .Spreading_Factor = SPREADING_FACTOR_12_4096,
@@ -88,7 +88,7 @@ LoraConf_t LoraInit = {
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-static void thisNodeInit(reset_cause_t);
+static void nodeInit(reset_cause_t);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -132,16 +132,17 @@ int main(void)
   LED_OFF();
   vLoraInit(&LoraInit);
   reset_cause_t resetCause = resetCauseGet();
-  STM_LOGI("Main", "Reset cause:  {%s}", resetCauseGetName(resetCause));
-  STM_LOGI("Main", "Watchdog Init {%ums}", iwdgInit(&hiwdg, WATCHDOG_TIME));
+  STM_LOGI(MAIN_TAG, "Reset cause:  {%s}", resetCauseGetName(resetCause));
+  STM_LOGI(MAIN_TAG, "Watchdog Init {%ums}", iwdgInit(&hiwdg, WATCHDOG_TIME));
 
   /* Retrieve old state from FLASH */
-  thisNodeInit(resetCause);
-  STM_LOGV("Main", "NodeID:   {%d}", thisNode.nodeID);
-  STM_LOGV("Main", "Relay:    {%s}", WHICH_RELAY(thisNode.relayState));
-  STM_LOGV("Main", "Location: {%d}", thisNode.location);
-  STM_LOGV("Main", "Error:    {%s}", WHICH_RELAY_ERR(thisNode.errCode));
-  
+  nodeInit(resetCause);
+  STM_LOGI(MAIN_TAG, "NodeID:     {%d}", thisNode.nodeID);
+  STM_LOGI(MAIN_TAG, "Relay:      {%s}", WHICH_RELAY(thisNode.relayState));
+  STM_LOGI(MAIN_TAG, "Location:   {%d}", thisNode.location);
+  STM_LOGI(MAIN_TAG, "Error:      {%s}", WHICH_RELAY_ERR(thisNode.errCode));
+  STM_LOGI(MAIN_TAG, "MeshID:     {%d}", thisNode.meshNodeID);
+  STM_LOGI(MAIN_TAG, "GatewayID:  {%d}", GATEWAY_ADDRESS);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -209,15 +210,15 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-static void thisNodeInit(reset_cause_t resetCause) {
+static void nodeInit(reset_cause_t resetCause) {
   if (Flash_ReadAddress(ADDR_RELAY_STATE) == FLASH_EMPTY)
   {
-    STM_LOGV("Main", "data not found, write relay data to flash");
+    STM_LOGV(MAIN_TAG, "data not found, write relay data to flash");
     updateDataToFlash();
   }
   else
   {
-    STM_LOGV("Main", "detect flash data, restore old state ...");
+    STM_LOGV(MAIN_TAG, "detect flash data, restore old state ...");
     thisNode.relayState = Flash_ReadAddress(ADDR_RELAY_STATE);
     thisNode.location = Flash_ReadAddress(ADDR_LOCATION);
     thisNode.errCode = Flash_ReadAddress(ADDR_ERROR_CODE);
@@ -238,7 +239,7 @@ void updateDataToFlash(void)
   ERROR_CHECK(Flash_WriteWord(ADDR_LOCATION, (uint32_t)thisNode.location));
   ERROR_CHECK(Flash_WriteWord(ADDR_ERROR_CODE, (uint32_t)thisNode.errCode));
   taskEXIT_CRITICAL();
-  STM_LOGD("Main", "update data to flash");
+  STM_LOGV(MAIN_TAG, "update data to flash");
 }
 
 /* USER CODE END 4 */

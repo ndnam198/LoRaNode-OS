@@ -5,13 +5,20 @@
 #include "main.h"
 #include "misc.h"
 
+#define THIS_NODE_ADDRESS  NODE2_ADDRESS
+#define MESH_NODE_ADDRESS  NODE3_ADDRESS
+#define GATEWAY_ADDRESS 0xFFu   /* Adress Gateway */
+// #define THIS_NODE_ADDRESS  NODE3_ADDRESS
+// #define MESH_NODE_ADDRESS  UNUSED_ADDRESS
+// #define GATEWAY_ADDRESS NODE1_ADDRESS
+#define THIS_NODE_LOCATION LOCATION_GIAI_PHONG_1
+
 /* Node address must be in rage [0:0xFE] */
 #define NODE1_ADDRESS   0x12u   /* Address node 1 */
 #define NODE2_ADDRESS   0x13u   /* Address node 1 */
 #define NODE3_ADDRESS   0x14u   /* Address node 2 */
 #define NODE4_ADDRESS   0x15u   /* Address node 2 */
-#define GATEWAY_ADDRESS 0xFFu   /* Adress Gateway */
-
+#define UNUSED_ADDRESS  0xEEu   /* Reserved */
 
 enum MSG_INDEX
 {
@@ -98,9 +105,11 @@ enum OPCODE {
 
 typedef struct NodeData {
     uint8_t nodeID;
+    uint8_t meshNodeID;
     NodeLocationTypeDef_t location;
     NodeStsTypedef_t relayState;
     NodeErrCodeTypeDef_t errCode;
+
 } NodeTypedef_t;
 
 #define PACK_RESPONSE_MSG(msg, node, msgSts, seqID, opcode)\
