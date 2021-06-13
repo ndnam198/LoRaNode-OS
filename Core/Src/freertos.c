@@ -153,7 +153,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the semaphores(s) */
   /* creation of rxDoneSemaphore */
-  rxDoneSemaphoreHandle = osSemaphoreNew(5, 5, &rxDoneSemaphore_attributes);
+  rxDoneSemaphoreHandle = osSemaphoreNew(5, 0, &rxDoneSemaphore_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   if (rxDoneSemaphoreHandle == NULL)
@@ -237,7 +237,7 @@ void entryProducer(void *argument)
   {
     err = osSemaphoreAcquire(rxDoneSemaphoreHandle, portMAX_DELAY);
     if (!err) {
-
+      TOGGLE_LED();
       STM_LOGV("Producer", "Get semaphore ok");
 
       if (LoRaGetITFlag(PAYLOAD_CRC_ERROR_MskPos) == 1)
@@ -324,6 +324,7 @@ void entryConsumer(void *argument)
         break;
       }
 
+      // LED_OFF();
       vModeInit(RXCONTINUOUS_MODE);
       updateDataToFlash();
     }
@@ -351,7 +352,7 @@ void entryPeriodic(void *argument)
       count = 0;
       // STM_LOGI("Periodic", "relay: %s", WHICH_RELAY(thisNode.relayState));
     }
-    HAL_IWDG_Refresh(&hiwdg);
+    // HAL_IWDG_Refresh(&hiwdg);
     osDelay(tickToWait);
   }
   /* USER CODE END entryPeriodic */

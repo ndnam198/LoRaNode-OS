@@ -70,7 +70,8 @@ LoraConf_t LoraInit = {
   .Fifo_Tx_Base_Addr = FIFO_TX_BASE_ADDR,
   .Fifo_Rx_Base_Addr = FIFO_RX_BASE_ADDR,
   .Coding_Rate = CODING_RATE_4_5,
-  .Band_Width = BANDWIDTH_125K,
+  // .Band_Width = BANDWIDTH_125K,
+  .Band_Width = BANDWIDTH_7K8,
   .Header_Mode = IMPLICIT_HEADER,
   .Spreading_Factor = SPREADING_FACTOR_12_4096,
   .Rx_Payload_Crc = CRC_ENABLE,
@@ -128,10 +129,11 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 //  vLoraInit();
+  LED_OFF();
   vLoraInit(&LoraInit);
   reset_cause_t resetCause = resetCauseGet();
   STM_LOGI("Main", "Reset cause:  {%s}", resetCauseGetName(resetCause));
-  STM_LOGI("Main", "Watchdog Init {%ums}", iwdgInit(&hiwdg, WATCHDOG_TIME));
+  // STM_LOGI("Main", "Watchdog Init {%ums}", iwdgInit(&hiwdg, WATCHDOG_TIME));
 
   /* Retrieve old state from FLASH */
   thisNodeInit(resetCause);
@@ -139,7 +141,7 @@ int main(void)
   STM_LOGV("Main", "Relay:    {%s}", WHICH_RELAY(thisNode.relayState));
   STM_LOGV("Main", "Location: {%d}", thisNode.location);
   STM_LOGV("Main", "Error:    {%s}", WHICH_RELAY_ERR(thisNode.errCode));
-
+  
   /* USER CODE END 2 */
 
   /* Init scheduler */
