@@ -343,16 +343,11 @@ void entryPeriodic(void *argument)
 {
   /* USER CODE BEGIN entryPeriodic */
   static const uint32_t tickToWait = pdMS_TO_TICKS(1000);
-  static int count;
   /* Infinite loop */
   for (;;)
   {
     TOGGLE_LED();
-    if (++count >= 10) {
-      count = 0;
-      // STM_LOGI("Periodic", "relay: %s", WHICH_RELAY(thisNode.relayState));
-    }
-    // HAL_IWDG_Refresh(&hiwdg);
+    HAL_IWDG_Refresh(&hiwdg);
     osDelay(tickToWait);
   }
   /* USER CODE END entryPeriodic */
