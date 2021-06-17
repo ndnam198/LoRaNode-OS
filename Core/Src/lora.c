@@ -1301,7 +1301,7 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs)
     if (HAL_GetTick() - startTick >= timeoutMs)
     {
       LORA_GET_REGISTER(RegIrqFlags);
-      STM_LOGE("LoRaTX", "TX_TIMEOUT");
+      STM_LOGW("LoRaTX", "TX_TIMEOUT");
       isTransmitOk = false;
       break;
     }
@@ -1313,70 +1313,6 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs)
   vModeInit(RXCONTINUOUS_MODE);
 }
 
-void LoRaReceiveCont(uint8_t* outData, uint8_t size, uint32_t timeoutMs)
-{
-  static bool isInit = false;
-  if (!isInit)
-  {
-    /* STANDY BY MODE */
-    vModeInit(STDBY_MODE);
-    // LORA_GET_REGISTER(RegOpMode);
-
-    /* RX CONTINUOUS MODE */
-    // if (rxMode == RXCONTINUOUS_MODE)
-    vSpi1Write(RegFifoAddrPtr, FIFO_RX_BASE_ADDR);
-    vModeInit(RXCONTINUOUS_MODE);
-    // else if (rxMode == RXSINGLE_MODE)
-    //   vModeInit(RXSINGLE_MODE);
-    // LORA_GET_REGISTER(RegOpMode);
-    isInit = true;
-  }
-
-  /* WAIT FOR RX_DONE */
-  if (timeoutMs == LORA_MAX_DELAY)
-  {
-    while ((ucSpi1Read(RegIrqFlags) & RX_DONE_Msk) >> RX_DONE_MskPos == 0u)
-      ;
-  }
-  else
-  {
-    uint32_t startTick = HAL_GetTick();
-    while ((ucSpi1Read(RegIrqFlags) & RX_DONE_Msk) >> RX_DONE_MskPos == 0u)
-    {
-      // STM_LOGV("Transmit", "Wait for TX_DONE ...\r\n");
-      if (HAL_GetTick() - startTick >= timeoutMs)
-      {
-        STM_LOGE("ReceiverErr", "RX_TIMEOUT");
-        isInit = false;
-        break;
-      }
-    }
-  }
-
-  if ((ucSpi1Read(RegIrqFlags) & RX_DONE_Msk) >> RX_DONE_MskPos)
-  {
-    /* PAYLOAD_CRC CHECK */
-    uint8_t temp = ucSpi1Read(RegIrqFlags);
-    if ((temp & PAYLOAD_CRC_ERROR_Msk) >> PAYLOAD_CRC_ERROR_MskPos == 1)
-    {
-      STM_LOGE("ReceiveErr", "Payload CRC Failed");
-    }
-    else
-    {
-      vSpi1Write(RegFifoAddrPtr, ucSpi1Read(RegFifoRxCurrentAddr));
-      for (size_t i = 0u; i < PAYLOAD_LENGTH; i++)
-      {
-        *(outData + i) = ucSpi1Read(RegFifo);
-        STM_LOGV("Transmit", "data receive[%d]: 0x%x", i, *(outData + i));
-        // LORA_GET_REGISTER(RegFifoAddrPtr);
-      }
-    }
-  }
-
-  /* CLEAR RX_DONE FLAG */
-  vSpi1Write(RegIrqFlags, RX_DONE_Msk | PAYLOAD_CRC_ERROR_Msk);
-  // LORA_GET_REGISTER(RegIrqFlags);
-}
 
 uint8_t LoRaGetITFlag(uint8_t irqFlag)
 {

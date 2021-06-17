@@ -94,9 +94,6 @@ uint32_t iwdgInit(IWDG_HandleTypeDef *hiwdg, uint32_t millis)
     /* Use prescaler LSI/128 */
     hiwdg->Init.Prescaler = IWDG_PRESCALER_128;
     hiwdg->Init.Reload = (int)(IWDG_RESOLUTION * ((float)configTime / PRESCALER_128_UPPER_LIMIT));
-    if (HAL_IWDG_Init(hiwdg) != HAL_OK)
-    {
-        STM_LOGE("IWDG", "Watchdog init failed");
-    }
+    STM_ERROR_CHECK(HAL_IWDG_Init(hiwdg) != HAL_OK, "IWDG: Watchdog init failed");
     return configTime;
 }

@@ -53,6 +53,15 @@ void stm_log_write(stm_log_level_t level, const char *tag, const char *format, .
 
 #define STM_LOGV( tag, format, ... )  if (LOG_LOCAL_LEVEL >= STM_LOG_VERBOSE) { stm_log_write(STM_LOG_VERBOSE, tag, LOG_FORMAT(V, format), HAL_GetTick(), tag, __func__, __LINE__, ##__VA_ARGS__); }
 
+#define STM_ERROR_CHECK(expression, format, ...)                     \
+do                                                                   \
+{                                                                    \
+    if (expression)                                                  \
+    {                                                                \
+        STM_LOGE("ERROR", format, ##__VA_ARGS__);                    \
+    }                                                                \
+} while (0)
+
 #ifdef __cplusplus
 }
 #endif

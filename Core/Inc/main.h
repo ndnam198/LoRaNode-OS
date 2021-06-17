@@ -33,9 +33,11 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #define NB_OF_RELAY_CHECK  (50u)
-#define ADDR_RELAY_STATE   ADDR_FLASH_PAGE_55
-#define ADDR_LOCATION      ADDR_FLASH_PAGE_55+4
-#define ADDR_ERROR_CODE    ADDR_FLASH_PAGE_55+8
+#define FLASH_ADDR_NODE_ID       ADDR_FLASH_PAGE_60
+#define FLASH_ADDR_MESH_NODE_ID  ADDR_FLASH_PAGE_60+4
+#define FLASH_ADDR_RELAY_STATE   ADDR_FLASH_PAGE_60+8
+#define FLASH_ADDR_LOCATION      ADDR_FLASH_PAGE_60+12
+#define FLASH_ADDR_ERROR_CODE    ADDR_FLASH_PAGE_60+16
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -98,9 +100,11 @@ extern "C" {
       STM_LOGE("ERROR_CHECK_TAG", "[Error] %s", WHICH_ERROR(ret)); \
     }                                                              \
   } while (0)
+
 #define TOGGLE_LED()         (HAL_GPIO_TogglePin(LED_OUTPUT_GPIO_Port, LED_OUTPUT_Pin))
 #define LED_ON()             (HAL_GPIO_WritePin(LED_OUTPUT_GPIO_Port, LED_OUTPUT_Pin, 0))
 #define LED_OFF()            (HAL_GPIO_WritePin(LED_OUTPUT_GPIO_Port, LED_OUTPUT_Pin, 1))
+#define GET_LED_STS()        (HAL_GPIO_ReadPin(LED_OUTPUT_GPIO_Port, LED_OUTPUT_Pin))
 #define RELAY_CONTROL(state) (HAL_GPIO_WritePin(RELAY_OUTPUT_GPIO_Port, RELAY_OUTPUT_Pin, state))
 #define RELAY_GET_STATE()    (HAL_GPIO_ReadPin(RELAY_OUTPUT_GPIO_Port, RELAY_OUTPUT_Pin))
 /* USER CODE END Private defines */

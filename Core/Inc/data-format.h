@@ -19,6 +19,7 @@
 #define NODE3_ADDRESS   0x14u   /* Address node 2 */
 #define NODE4_ADDRESS   0x15u   /* Address node 2 */
 #define UNUSED_ADDRESS  0xEEu   /* Reserved */
+#define BROADCAST_ADDRESS 0xBB  /* Broadcast address */
 
 enum MSG_INDEX
 {

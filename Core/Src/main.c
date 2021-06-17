@@ -16,8 +16,8 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
+  /* USER CODE END Header */
+  /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
 #include "adc.h"
@@ -88,7 +88,8 @@ LoraConf_t LoraInit = {
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-static void nodeInit(reset_cause_t);
+static void nodeInit();
+static void pwdOnNotif(reset_cause_t);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -133,16 +134,23 @@ int main(void)
   vLoraInit(&LoraInit);
   reset_cause_t resetCause = resetCauseGet();
   STM_LOGI(MAIN_TAG, "Reset cause:  {%s}", resetCauseGetName(resetCause));
-  STM_LOGI(MAIN_TAG, "Watchdog Init {%ums}", iwdgInit(&hiwdg, WATCHDOG_TIME));
 
   /* Retrieve old state from FLASH */
-  nodeInit(resetCause);
+  nodeInit();
+
   STM_LOGI(MAIN_TAG, "NodeID:     {%d}", thisNode.nodeID);
   STM_LOGI(MAIN_TAG, "Relay:      {%s}", WHICH_RELAY(thisNode.relayState));
   STM_LOGI(MAIN_TAG, "Location:   {%d}", thisNode.location);
   STM_LOGI(MAIN_TAG, "Error:      {%s}", WHICH_RELAY_ERR(thisNode.errCode));
   STM_LOGI(MAIN_TAG, "MeshID:     {%d}", thisNode.meshNodeID);
   STM_LOGI(MAIN_TAG, "GatewayID:  {%d}", GATEWAY_ADDRESS);
+
+  /* Send notif gw after power on */
+  pwdOnNotif(resetCause);
+
+  /* Enable watchdog */
+  STM_LOGI(MAIN_TAG, "Watchdog Init {%ums}", iwdgInit(&hiwdg, WATCHDOG_TIME));
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -169,14 +177,14 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+  RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = { 0 };
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -190,8 +198,8 @@ void SystemClock_Config(void)
   }
   /** Initializes the CPU, AHB and APB buses clocks
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+    | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -210,34 +218,57 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-static void nodeInit(reset_cause_t resetCause) {
-  if (Flash_ReadAddress(ADDR_RELAY_STATE) == FLASH_EMPTY)
+static void nodeInit() {
+  printf("read relay from flash: %d\r\n", Flash_ReadAddress(FLASH_ADDR_RELAY_STATE));
+  if (Flash_ReadAddress(FLASH_ADDR_RELAY_STATE) == FLASH_EMPTY)
   {
     STM_LOGV(MAIN_TAG, "data not found, write relay data to flash");
-    updateDataToFlash();
+    ERROR_CHECK(Flash_ErasePage(FLASH_ADDR_RELAY_STATE, 1));
+    ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_NODE_ID, (uint32_t)thisNode.nodeID));
+    ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_MESH_NODE_ID, (uint32_t)thisNode.meshNodeID));
+    ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_RELAY_STATE, (uint32_t)thisNode.relayState));
+    ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_LOCATION, (uint32_t)thisNode.location));
+    ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_ERROR_CODE, (uint32_t)thisNode.errCode));
   }
   else
   {
     STM_LOGV(MAIN_TAG, "detect flash data, restore old state ...");
-    thisNode.relayState = Flash_ReadAddress(ADDR_RELAY_STATE);
-    thisNode.location = Flash_ReadAddress(ADDR_LOCATION);
-    thisNode.errCode = Flash_ReadAddress(ADDR_ERROR_CODE);
+    uint8_t flashNodeID = Flash_ReadAddress(FLASH_ADDR_NODE_ID);
+    if (thisNode.nodeID != flashNodeID && flashNodeID != 0xFF)
+    {
+      STM_LOGI(MAIN_TAG, "NodeID update: %d ---> %d", thisNode.nodeID, flashNodeID);
+      thisNode.nodeID = flashNodeID;
+    }
+
+    uint8_t flashMeshNodeID = Flash_ReadAddress(FLASH_ADDR_MESH_NODE_ID);
+    if (thisNode.meshNodeID != flashMeshNodeID && flashMeshNodeID != 0xFF && flashMeshNodeID != thisNode.nodeID)
+    {
+      STM_LOGI(MAIN_TAG, "Mesh NodeID update: %d ---> %d", thisNode.meshNodeID, flashMeshNodeID);
+      thisNode.meshNodeID = flashMeshNodeID;
+    }
+
+    thisNode.relayState = Flash_ReadAddress(FLASH_ADDR_RELAY_STATE);
+    thisNode.location = Flash_ReadAddress(FLASH_ADDR_LOCATION);
+    thisNode.errCode = Flash_ReadAddress(FLASH_ADDR_ERROR_CODE);
     RELAY_CONTROL(thisNode.relayState);
   }
+}
 
-  /* Send notif gw after power on */
+static void pwdOnNotif(reset_cause_t rstCause)
+{
   uint8_t notifData[PAYLOAD_LENGTH];
-  PACK_NOTIF_MSG(notifData, thisNode, resetCause);
+  PACK_NOTIF_MSG(notifData, thisNode, rstCause);
   LoRaTransmit(notifData, PAYLOAD_LENGTH, LORA_DELAY);
 }
 
 void updateDataToFlash(void)
 {
   taskENTER_CRITICAL();
-  ERROR_CHECK(Flash_ErasePage(ADDR_RELAY_STATE, 1));
-  ERROR_CHECK(Flash_WriteWord(ADDR_RELAY_STATE, (uint32_t)thisNode.relayState));
-  ERROR_CHECK(Flash_WriteWord(ADDR_LOCATION, (uint32_t)thisNode.location));
-  ERROR_CHECK(Flash_WriteWord(ADDR_ERROR_CODE, (uint32_t)thisNode.errCode));
+  ERROR_CHECK(Flash_ErasePage(FLASH_ADDR_RELAY_STATE, 1));
+  ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_MESH_NODE_ID, (uint32_t)thisNode.meshNodeID));
+  ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_RELAY_STATE, (uint32_t)thisNode.relayState));
+  ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_LOCATION, (uint32_t)thisNode.location));
+  ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_ERROR_CODE, (uint32_t)thisNode.errCode));
   taskEXIT_CRITICAL();
   STM_LOGV(MAIN_TAG, "update data to flash");
 }
@@ -252,7 +283,7 @@ void updateDataToFlash(void)
   * @param  htim : TIM handle
   * @retval None
   */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
   /* USER CODE BEGIN Callback 0 */
 
@@ -288,12 +319,12 @@ void Error_Handler(void)
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t *file, uint32_t line)
+void assert_failed(uint8_t* file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+     /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
 

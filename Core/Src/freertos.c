@@ -34,6 +34,7 @@
 #include "light-sensor.h"
 #include <stdbool.h>
 #include "flash.h"
+#include "led_mngr.h"
 
 /* USER CODE END Includes */
 
@@ -58,13 +59,6 @@ extern NodeTypedef_t thisNode;
 extern uint32_t adcLightSensor;
 extern IWDG_HandleTypeDef hiwdg;
 /* USER CODE END Variables */
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .stack_size = 64 * 4,
-  .priority = (osPriority_t)osPriorityNormal,
-};
 /* Definitions for taskProducer */
 osThreadId_t taskProducerHandle;
 const osThreadAttr_t taskProducer_attributes = {
@@ -83,19 +77,13 @@ const osThreadAttr_t taskConsumer_attributes = {
 osThreadId_t taskPeriodicHandle;
 const osThreadAttr_t taskPeriodic_attributes = {
   .name = "taskPeriodic",
-  .stack_size = 256 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t)osPriorityLow4,
 };
 /* Definitions for myQueue01 */
 osMessageQueueId_t myQueue01Handle;
 const osMessageQueueAttr_t myQueue01_attributes = {
   .name = "myQueue01"
-};
-/* Definitions for nodedataMutex */
-osMutexId_t nodedataMutexHandle;
-const osMutexAttr_t nodedataMutex_attributes = {
-  .name = "nodedataMutex",
-  .attr_bits = osMutexRecursive,
 };
 /* Definitions for rxDoneSemaphore */
 osSemaphoreId_t rxDoneSemaphoreHandle;
@@ -147,7 +135,6 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the recursive mutex(es) */
   /* creation of nodedataMutex */
-  nodedataMutexHandle = osMutexNew(&nodedataMutex_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -158,8 +145,7 @@ void MX_FREERTOS_Init(void) {
   rxDoneSemaphoreHandle = osSemaphoreNew(5, 0, &rxDoneSemaphore_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  if (rxDoneSemaphoreHandle == NULL)
-    STM_LOGE("ERROR", "create rxDoneSemaphoreHandle failed");
+  STM_ERROR_CHECK(rxDoneSemaphoreHandle == NULL, "create rxDoneSemaphoreHandle failed");
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -170,14 +156,11 @@ void MX_FREERTOS_Init(void) {
   myQueue01Handle = osMessageQueueNew(10, 10, &myQueue01_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  if (myQueue01Handle == NULL)
-    STM_LOGE("ERROR", "create myQueue01Handle failed");
+  STM_ERROR_CHECK(myQueue01Handle == NULL, "create myQueue01Handle failed");
 
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of taskProducer */
   taskProducerHandle = osThreadNew(entryProducer, NULL, &taskProducer_attributes);
@@ -189,12 +172,9 @@ void MX_FREERTOS_Init(void) {
   taskPeriodicHandle = osThreadNew(entryPeriodic, NULL, &taskPeriodic_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  if (taskProducerHandle == NULL)
-    STM_LOGE("ERROR", "create taskProducerHandle failed");
-  if (taskConsumerHandle == NULL)
-    STM_LOGE("ERROR", "create taskConsumerHandle failed");
-  if (taskPeriodicHandle == NULL)
-    STM_LOGE("ERROR", "create taskPeriodicHandle failed");
+  STM_ERROR_CHECK(taskProducerHandle == NULL, "create taskProducerHandle failed");
+  STM_ERROR_CHECK(taskConsumerHandle == NULL, "create taskConsumerHandle failed");
+  STM_ERROR_CHECK(taskPeriodicHandle == NULL, "create taskPeriodicHandle failed");
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -244,7 +224,7 @@ void entryProducer(void* argument)
 
       if (LoRaGetITFlag(PAYLOAD_CRC_ERROR_MskPos) == 1)
       {
-        STM_LOGE(PRODUCER_TAG, "Payload CRC failed");
+        STM_LOGW(PRODUCER_TAG, "Payload CRC failed");
         vModeInit(RXCONTINUOUS_MODE);
       }
       else
@@ -256,20 +236,18 @@ void entryProducer(void* argument)
         }
 
         STM_LOGI(PRODUCER_TAG, "msg source ID: %d - msg dest ID: %d - thisNodeID: %d", receivedMsg[INDEX_SOURCE_ID], receivedMsg[INDEX_DEST_ID], thisNode.nodeID);
-        if (receivedMsg[INDEX_DEST_ID] == thisNode.nodeID && receivedMsg[INDEX_MSG_TYPE] == MSG_TYPE_REQUEST && receivedMsg[INDEX_SOURCE_ID] == GATEWAY_ADDRESS)
+        if ((receivedMsg[INDEX_DEST_ID] == BROADCAST_ADDRESS || receivedMsg[INDEX_DEST_ID] == thisNode.nodeID)
+          && receivedMsg[INDEX_MSG_TYPE] == MSG_TYPE_REQUEST
+          && receivedMsg[INDEX_SOURCE_ID] == GATEWAY_ADDRESS)
         {
-          err = osMessageQueuePut(myQueue01Handle, receivedMsg, 0, tickToWait);
-          if (!err)
+          STM_ERROR_CHECK((err = osMessageQueuePut(myQueue01Handle, receivedMsg, 0, tickToWait)) != osOK, "enqueue failed, err %d\n\r NbOfMsg in queue : % d\n\ravailable size : % d", \
+            err, \
+            osMessageQueueGetCount(myQueue01Handle), \
+            osMessageQueueGetSpace(myQueue01Handle));
+          if (err == osOK)
           {
             LED_ON();
             STM_LOGV(PRODUCER_TAG, "enqueue ok");
-          }
-          else
-          {
-            STM_LOGE(PRODUCER_TAG, "enqueue failed, err %d\n\r NbOfMsg in queue : % d\n\ravailable size : % d", \
-              err, \
-              osMessageQueueGetCount(myQueue01Handle), \
-              osMessageQueueGetSpace(myQueue01Handle));
           }
         }
         else if (thisNode.meshNodeID != UNUSED_ADDRESS)
@@ -335,7 +313,7 @@ void entryConsumer(void* argument)
         opcodeLocationUpdate(receivedMsgFromQueue[INDEX_DATA_LOCATION], receivedMsgFromQueue[INDEX_SEQUENCE_ID]);
         break;
       default:
-        STM_LOGE(CONSUMER_TAG, "Opcode not found %d", receivedMsgFromQueue[INDEX_COMMAND_OPCODE]);
+        STM_LOGW(CONSUMER_TAG, "Opcode not found %d", receivedMsgFromQueue[INDEX_COMMAND_OPCODE]);
         break;
       }
 
@@ -357,11 +335,12 @@ void entryConsumer(void* argument)
 void entryPeriodic(void* argument)
 {
   /* USER CODE BEGIN entryPeriodic */
-  static const uint32_t tickToWait = pdMS_TO_TICKS(5000);
+  static const uint32_t DELAY_MS = 500;
+  static const uint32_t tickToWait = pdMS_TO_TICKS(DELAY_MS);
   /* Infinite loop */
   for (;;)
   {
-    // TOGGLE_LED();
+    LedControl(thisNode.errCode, 3 * DELAY_MS, DELAY_MS);
     HAL_IWDG_Refresh(&hiwdg);
     osDelay(tickToWait);
   }
@@ -402,7 +381,7 @@ static void opcodeRelayControl(uint8_t newState, uint8_t seqID)
         STM_LOGD(CONSUMER_TAG, "----> check ok ");
       }
       else if (countCheck == NB_OF_RELAY_CHECK) {
-        STM_LOGE(CONSUMER_TAG, "----> check failed");
+        STM_LOGW(CONSUMER_TAG, "----> check failed");
         isAck = false;
         thisNode.errCode = (thisNode.relayState == RELAY_STATE_ON) ? ERR_CODE_LIGHT_ON_FAILED : ERR_CODE_LIGHT_OFF_FAILED;
         thisNode.relayState = !thisNode.relayState;

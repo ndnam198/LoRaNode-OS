@@ -54,9 +54,7 @@ HAL_StatusTypeDef Flash_ErasePage(uint32_t start_address, uint32_t nb_of_delete_
     EraseInitStruct.NbPages = nb_of_delete_pages;
 
     HAL_StatusTypeDef err = HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
-    if (PageError != 0xFFFFFFFF) {
-        STM_LOGE("Flash", "PageError != 0xFFFFFFFF, %d", PageError);
-    }
+    STM_ERROR_CHECK(PageError != 0xFFFFFFFF, "PageError != 0xFFFFFFFF, %d", PageError);
 
     HAL_FLASH_Lock();
     return err;
