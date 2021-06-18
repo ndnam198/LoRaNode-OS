@@ -58,12 +58,15 @@
 extern NodeTypedef_t thisNode;
 extern uint32_t adcLightSensor;
 extern IWDG_HandleTypeDef hiwdg;
+
+static StateMachineTypeDef_t stateMachine = STATE_WAIT_FOR_MSG;
+
 /* USER CODE END Variables */
 /* Definitions for taskProducer */
 osThreadId_t taskProducerHandle;
 const osThreadAttr_t taskProducer_attributes = {
   .name = "taskProducer",
-  .stack_size = 1024 * 4,
+  .stack_size = 1200 * 4,
   .priority = (osPriority_t)osPriorityNormal,
 };
 /* Definitions for taskConsumer */
@@ -71,14 +74,14 @@ osThreadId_t taskConsumerHandle;
 const osThreadAttr_t taskConsumer_attributes = {
   .name = "taskConsumer",
   .stack_size = 1024 * 4,
-  .priority = (osPriority_t)osPriorityBelowNormal,
+  .priority = (osPriority_t)osPriorityNormal3,
 };
 /* Definitions for taskPeriodic */
 osThreadId_t taskPeriodicHandle;
 const osThreadAttr_t taskPeriodic_attributes = {
   .name = "taskPeriodic",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t)osPriorityLow4,
+  .priority = (osPriority_t)osPriorityAboveNormal,
 };
 /* Definitions for myQueue01 */
 osMessageQueueId_t myQueue01Handle;
@@ -97,6 +100,9 @@ static void opcodeInquiry(uint8_t seqID);
 static void opcodeRelayControl(uint8_t newState, uint8_t seqID);
 static void opcodeMcuReset(void);
 static void opcodeLocationUpdate(uint8_t newLocation, uint8_t seqID);
+static void opcodeMeshNodeIdUpdate(uint8_t newMeshNodeID, uint8_t seqID);
+
+static void stateChange(StateMachineTypeDef_t newState, int caller);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void* argument);
@@ -218,57 +224,58 @@ void entryProducer(void* argument)
   for (;;)
   {
     err = osSemaphoreAcquire(rxDoneSemaphoreHandle, portMAX_DELAY);
-    if (!err) {
-      vModeInit(STDBY_MODE);
+    if (!err)
+    {
       STM_LOGV(PRODUCER_TAG, "Get semaphore ok");
-
       if (LoRaGetITFlag(PAYLOAD_CRC_ERROR_MskPos) == 1)
       {
         STM_LOGW(PRODUCER_TAG, "Payload CRC failed");
-        vModeInit(RXCONTINUOUS_MODE);
+        stateChange(STATE_WAIT_FOR_MSG, __LINE__);
       }
       else
       {
-        LORA_SET_FIFO_CURRENT_MSG();
-        for (uint8_t i = 0; i < PAYLOAD_LENGTH; i++) {
-          receivedMsg[i] = ucSpi1Read(RegFifo);
-          // STM_LOGI(PRODUCER_TAG, "receivedData[%d]: %x", i, receivedMsg[i]);
-        }
+        stateChange(STATE_MESSAGE_PROCESSING, __LINE__);
+        vGetLoRaData(receivedMsg, PAYLOAD_LENGTH);
 
-        STM_LOGI(PRODUCER_TAG, "msg source ID: %d - msg dest ID: %d - thisNodeID: %d", receivedMsg[INDEX_SOURCE_ID], receivedMsg[INDEX_DEST_ID], thisNode.nodeID);
-        if ((receivedMsg[INDEX_DEST_ID] == BROADCAST_ADDRESS || receivedMsg[INDEX_DEST_ID] == thisNode.nodeID)
-          && receivedMsg[INDEX_MSG_TYPE] == MSG_TYPE_REQUEST
-          && receivedMsg[INDEX_SOURCE_ID] == GATEWAY_ADDRESS)
+        STM_LOGI(PRODUCER_TAG, "---> Got message: source: %d - dest: %d - this: %d",
+          receivedMsg[INDEX_SOURCE_ID],
+          receivedMsg[INDEX_DEST_ID],
+          thisNode.nodeID);
+
+        if (receivedMsg[INDEX_DEST_ID] == BROADCAST_ADDRESS || receivedMsg[INDEX_DEST_ID] == thisNode.nodeID)
         {
-          STM_ERROR_CHECK((err = osMessageQueuePut(myQueue01Handle, receivedMsg, 0, tickToWait)) != osOK, "enqueue failed, err %d\n\r NbOfMsg in queue : % d\n\ravailable size : % d", \
-            err, \
-            osMessageQueueGetCount(myQueue01Handle), \
-            osMessageQueueGetSpace(myQueue01Handle));
-          if (err == osOK)
+          if (receivedMsg[INDEX_MSG_TYPE] == MSG_TYPE_REQUEST
+            && receivedMsg[INDEX_SOURCE_ID] == GATEWAY_ADDRESS)
           {
-            LED_ON();
-            STM_LOGV(PRODUCER_TAG, "enqueue ok");
+            STM_ERROR_CHECK((err = osMessageQueuePut(myQueue01Handle, receivedMsg, 0, tickToWait)) != osOK, "enqueue failed, err %d\n\r NbOfMsg in queue : % d\n\ravailable size : % d", \
+              err, \
+              osMessageQueueGetCount(myQueue01Handle), \
+              osMessageQueueGetSpace(myQueue01Handle));
+
+            if (err == osOK)
+            {
+              STM_LOGV(PRODUCER_TAG, "enqueue ok");
+            }
+            else
+            {
+              stateChange(STATE_WAIT_FOR_MSG, __LINE__);
+            }
+          }
+          else
+          {
+            STM_LOGW(PRODUCER_TAG, "Msg type not valid: {%s}", WHICH_MSG_TYPE(receivedMsg[INDEX_MSG_TYPE]));
           }
         }
-        else if (thisNode.meshNodeID != UNUSED_ADDRESS)
+        else if (thisNode.meshNodeID != UNUSED_ADDRESS
+          && (receivedMsg[INDEX_DEST_ID] == thisNode.meshNodeID || receivedMsg[INDEX_SOURCE_ID] == thisNode.meshNodeID))
         {
-          if (receivedMsg[INDEX_DEST_ID] == thisNode.meshNodeID && receivedMsg[INDEX_MSG_TYPE] == MSG_TYPE_REQUEST && receivedMsg[INDEX_SOURCE_ID] == GATEWAY_ADDRESS)
-          {
-            STM_LOGD(PRODUCER_TAG, "---> forward GATEWAY msg to MESH NODE");
-            receivedMsg[INDEX_SOURCE_ID] = THIS_NODE_ADDRESS;
-            LoRaTransmit(receivedMsg, PAYLOAD_LENGTH, LORA_DELAY);
-          }
-          else if (receivedMsg[INDEX_SOURCE_ID] == thisNode.meshNodeID && receivedMsg[INDEX_DEST_ID] == thisNode.nodeID)
-          {
-            STM_LOGD(PRODUCER_TAG, "---> forward MESH NODE msg to GATEWAY");
-            receivedMsg[INDEX_DEST_ID] = GATEWAY_ADDRESS;
-            LoRaTransmit(receivedMsg, PAYLOAD_LENGTH, LORA_DELAY);
-          }
+          LoRaTransmit(receivedMsg, PAYLOAD_LENGTH, LORA_DELAY);
+          stateChange(STATE_WAIT_FOR_MSG, __LINE__);
         }
         else
         {
-          STM_LOGV(PRODUCER_TAG, "msg not matched --> dicarded");
-          vModeInit(RXCONTINUOUS_MODE);
+          STM_LOGV(PRODUCER_TAG, "not matched ---> ignore");
+          stateChange(STATE_WAIT_FOR_MSG, __LINE__);
         }
       }
       LoRaClearITFlag(RX_DONE_Msk | PAYLOAD_CRC_ERROR_Msk);
@@ -312,14 +319,16 @@ void entryConsumer(void* argument)
       case OPCODE_REQUEST_LOCATION_UPDATE:
         opcodeLocationUpdate(receivedMsgFromQueue[INDEX_DATA_LOCATION], receivedMsgFromQueue[INDEX_SEQUENCE_ID]);
         break;
+      case OPCODE_REQUEST_MESH_NODE_ID_UPDATE:
+        opcodeMeshNodeIdUpdate(receivedMsgFromQueue[INDEX_DATA_MESH_NODE_ID], receivedMsgFromQueue[INDEX_SEQUENCE_ID]);
+        break;
       default:
         STM_LOGW(CONSUMER_TAG, "Opcode not found %d", receivedMsgFromQueue[INDEX_COMMAND_OPCODE]);
         break;
       }
 
-      LED_OFF();
       updateDataToFlash();
-      vModeInit(RXCONTINUOUS_MODE);
+      stateChange(STATE_WAIT_FOR_MSG, __LINE__);
     }
   }
   /* USER CODE END entryConsumer */
@@ -341,6 +350,11 @@ void entryPeriodic(void* argument)
   for (;;)
   {
     LedControl(thisNode.errCode, 3 * DELAY_MS, DELAY_MS);
+    if (stateMachine == STATE_WAIT_FOR_MSG && ucGetLoraWorkingMode() != RXCONTINUOUS_MODE)
+    {
+      vModeInit(RXCONTINUOUS_MODE);
+    }
+
     HAL_IWDG_Refresh(&hiwdg);
     osDelay(tickToWait);
   }
@@ -422,16 +436,47 @@ static void opcodeLocationUpdate(uint8_t newLocation, uint8_t seqID)
   if (newLocation != LOCATION_NONE)
   {
     thisNode.location = newLocation;
-    STM_LOGV(CONSUMER_TAG, "----> Update location %d", newLocation);
+    STM_LOGI(CONSUMER_TAG, "----> Update location %d", newLocation);
     PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_LOCATION_UPDATE);
   }
   else
   {
-    STM_LOGV(CONSUMER_TAG, "Invalid data %d", newLocation);
+    STM_LOGW(CONSUMER_TAG, "Invalid data %d", newLocation);
     PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_FAILED, seqID, OPCODE_RESPOSNE_LOCATION_UPDATE);
   }
   LoRaTransmit(msg, PAYLOAD_LENGTH, LORA_DELAY);
 }
+
+static void opcodeMeshNodeIdUpdate(uint8_t newMeshNodeID, uint8_t seqID)
+{
+  uint8_t msg[PAYLOAD_LENGTH];
+  if (thisNode.meshNodeID != newMeshNodeID && thisNode.nodeID != newMeshNodeID)
+  {
+    thisNode.meshNodeID = newMeshNodeID;
+  }
+  PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_MESH_NODE_ID_UPDATE);
+  LoRaTransmit(msg, PAYLOAD_LENGTH, LORA_DELAY);
+}
+
+static void stateChange(StateMachineTypeDef_t newState, int caller)
+{
+  STM_LOGI("STATE MACHINE", "CALLER: %d - {%s} to {%s}",
+    caller,
+    WHICH_STATE(stateMachine),
+    WHICH_STATE(newState));
+
+  if (newState == STATE_WAIT_FOR_MSG)
+  {
+    vModeInit(RXCONTINUOUS_MODE);
+  }
+  else if (newState == STATE_MESSAGE_PROCESSING)
+  {
+    vModeInit(STDBY_MODE);
+  }
+  stateMachine = newState;
+}
+
+
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

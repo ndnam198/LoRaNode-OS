@@ -42,21 +42,25 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+  typedef enum
+  {
+    STATE_WAIT_FOR_MSG,
+    STATE_MESSAGE_PROCESSING,
+  } StateMachineTypeDef_t;
 
+  /* USER CODE END ET */
 
-/* USER CODE END ET */
+  /* Exported constants --------------------------------------------------------*/
+  /* USER CODE BEGIN EC */
 
-/* Exported constants --------------------------------------------------------*/
-/* USER CODE BEGIN EC */
+  /* USER CODE END EC */
 
-/* USER CODE END EC */
+  /* Exported macro ------------------------------------------------------------*/
+  /* USER CODE BEGIN EM */
 
-/* Exported macro ------------------------------------------------------------*/
-/* USER CODE BEGIN EM */
+  /* USER CODE END EM */
 
-/* USER CODE END EM */
-
-/* Exported functions prototypes ---------------------------------------------*/
+  /* Exported functions prototypes ---------------------------------------------*/
   void Error_Handler(void);
 
   /* USER CODE BEGIN EFP */
@@ -84,7 +88,7 @@ extern "C" {
 #define WHICH_MSG_TYPE(type) (type == MSG_TYPE_REQUEST) ? "REQUEST" : ((type == MSG_TYPE_RESPONSE) ? "RESPONSE" : "NOTIF")
 #define WHICH_RELAY(state) (state == RELAY_STATE_OFF) ? "RELAY_OFF" : ((state == RELAY_STATE_ON) ? "RELAY_ON" : "RELAY_UNKNOWN")
 #define WHICH_RELAY_ERR(err) (err == ERR_CODE_NONE) ? "ERR_NONE" : ((err == ERR_CODE_LIGHT_ON_FAILED) ? "ON_FAILED" : "OFF_FAILED")
-
+#define WHICH_STATE(state) (state == STATE_WAIT_FOR_MSG) ? "STATE_WAIT_FOR_MSG" : "STATE_MESSAGE_PROCESSING"
 #define WHICH_MODE(mode)           \
 (mode == SLEEP_MODE) ? "SLEEP" :   \
 ((mode == STDBY_MODE) ? "STANDBY" :\

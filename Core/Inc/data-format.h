@@ -5,12 +5,11 @@
 #include "main.h"
 #include "misc.h"
 
-#define THIS_NODE_ADDRESS  NODE2_ADDRESS
-#define MESH_NODE_ADDRESS  NODE3_ADDRESS
+// #define THIS_NODE_ADDRESS  NODE2_ADDRESS
+// #define MESH_NODE_ADDRESS  NODE3_ADDRESS
 #define GATEWAY_ADDRESS 0xFFu   /* Adress Gateway */
-// #define THIS_NODE_ADDRESS  NODE3_ADDRESS
-// #define MESH_NODE_ADDRESS  UNUSED_ADDRESS
-// #define GATEWAY_ADDRESS NODE1_ADDRESS
+#define THIS_NODE_ADDRESS  NODE3_ADDRESS
+#define MESH_NODE_ADDRESS  UNUSED_ADDRESS
 #define THIS_NODE_LOCATION LOCATION_GIAI_PHONG_1
 
 /* Node address must be in rage [0:0xFE] */
@@ -29,11 +28,12 @@ enum MSG_INDEX
     INDEX_MSG_STATUS = 3u,         /* Header field, Status of msg, refer @MSG_STATUS enumeration */
     INDEX_SEQUENCE_ID = 4u,        /* Header field, Message's sequence ID */
     INDEX_DATA_LOCATION = 5u,      /* Data field, refer to @DATA_LOCATION enumeration */
+    INDEX_DATA_MESH_NODE_ID = INDEX_DATA_LOCATION, /* Data field, this node's mesh node */
     INDEX_DATA_RELAY_STATE = 6u,   /* Data field, either On or Off */
     INDEX_DATA_ERR_CODE = 7u,      /* Data field, refer to @DATA_ERR_CODE */
     INDEX_COMMAND_OPCODE = 8u,     /* Specify command by OPCODE, refer @OPCODE*/
     INDEX_RESET_CAUSE = 9u,        /* Data field, refer to @reset_cause in misc.h */
-    INDEX_PACKET_RSSI = 9u,
+    INDEX_PACKET_RSSI = INDEX_RESET_CAUSE,
     INDEX_MAX = 10u,
 };
 
@@ -102,6 +102,8 @@ enum OPCODE {
     OPCODE_RESPOSNE_MCU_RESET = OPCODE_REQUEST_MCU_RESET + 100,
     OPCODE_REQUEST_LOCATION_UPDATE = 4,
     OPCODE_RESPOSNE_LOCATION_UPDATE = OPCODE_REQUEST_LOCATION_UPDATE + 100,
+    OPCODE_REQUEST_MESH_NODE_ID_UPDATE = 5,
+    OPCODE_RESPOSNE_MESH_NODE_ID_UPDATE = OPCODE_REQUEST_MESH_NODE_ID_UPDATE + 100,
 };
 
 typedef struct NodeData {
@@ -110,7 +112,6 @@ typedef struct NodeData {
     NodeLocationTypeDef_t location;
     NodeStsTypedef_t relayState;
     NodeErrCodeTypeDef_t errCode;
-
 } NodeTypedef_t;
 
 #define PACK_RESPONSE_MSG(msg, node, msgSts, seqID, opcode)\

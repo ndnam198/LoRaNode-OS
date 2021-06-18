@@ -219,7 +219,6 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 static void nodeInit() {
-  printf("read relay from flash: %d\r\n", Flash_ReadAddress(FLASH_ADDR_RELAY_STATE));
   if (Flash_ReadAddress(FLASH_ADDR_RELAY_STATE) == FLASH_EMPTY)
   {
     STM_LOGV(MAIN_TAG, "data not found, write relay data to flash");

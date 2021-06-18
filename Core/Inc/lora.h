@@ -20,7 +20,7 @@
 
 #define USE_LORA_MODE               (1u)
 
-#define LORA_DELAY                  (0xFFFFFFFF)
+#define LORA_DELAY                  (100000)
 #define LORA_MAX_DELAY              (0xFFFF)
 
 #define DELAY_SPI                   3u
@@ -510,6 +510,8 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs);
 uint8_t LoRaGetITFlag(uint8_t irqFlag);
 void LoRaClearITFlag(uint8_t flag);
 int16_t GetRssi(uint8_t Frequency_Type);
+LoRaWorkingMode_t ucGetLoraWorkingMode();
+void vGetLoRaData(uint8_t* outBuf, size_t size);
 /* -------------------------- End private functions ------------------------- */
 
 #endif /* !_LORA_H_ */

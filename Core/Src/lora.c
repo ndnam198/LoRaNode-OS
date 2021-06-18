@@ -121,6 +121,11 @@ void vModeInit(uint8_t ucMode)
   }
 }
 
+LoRaWorkingMode_t ucGetLoraWorkingMode()
+{
+  return (ucSpi1Read(RegOpMode) & 0x07);
+}
+
 /**
   * @brief RF carrier frequency Initialization
   * @param uiFrf: Value of RF carrier frequency
@@ -1172,7 +1177,7 @@ void vLoraInit(LoraConf_t* LoraInit)
   vLowDataRateOptimizeInit(LOW_DATA_RATE_OPTIMIZE); /* Enabled; mandated for when the symbol length exceeds16ms */
   // vAgcAutoOnInit(AGC_AUTO); /* 0 -> LNA gain set by register LnaGain 1 -> LNA gain set by the internal AGC loop*/
   // // LORA_GET_REGISTER(RegModemConfig3);
-  
+
   vDetectionOptimizeInit(LoraInit->Detection_Optimize); /* LoRa Detection Optimize 0x03 -> SF7 to SF12; 0x05 -> SF6 */
   // LORA_GET_REGISTER(RegDetectOptimize);
 
@@ -1264,7 +1269,6 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs)
 {
   bool isTransmitOk = true;
   vModeInit(STDBY_MODE);
-  LORA_GET_REGISTER(RegOpMode);
 
   /* STANDBY MODE */
   vSpi1Write(RegFifoAddrPtr, FIFO_TX_BASE_ADDR); /* Set FifoPtrAddr to FifoTxPtrBase */
@@ -1293,7 +1297,6 @@ void LoRaTransmit(uint8_t* data, uint8_t size, uint32_t timeoutMs)
   /* MODE REQUEST TX */
   HAL_Delay(10);
   vModeInit(TX_MODE);
-  LORA_GET_REGISTER(RegOpMode);
   uint32_t startTick = HAL_GetTick();
   STM_LOGV("LoRaTX", "Wait for TX_DONE ...\r\n");
   while ((ucSpi1Read(RegIrqFlags) & TX_DONE_Msk) >> TX_DONE_MskPos == 0u)
@@ -1369,4 +1372,13 @@ void LoRaClearITFlag(uint8_t flag)
   // if (flag & CAD_DONE_Msk) {
   //   STM_LOGV("LoRa", "Clear CAD_DONE_IT_FLAG");
   // }
+}
+
+void vGetLoRaData(uint8_t* outBuf, size_t size)
+{
+  LORA_SET_FIFO_CURRENT_MSG();
+  for (uint8_t i = 0; i < size; i++) {
+    outBuf[i] = ucSpi1Read(RegFifo);
+    // STM_LOGI(PRODUCER_TAG, "receivedData[%d]: %x", i, receivedMsg[i]);
+  }
 }
