@@ -349,7 +349,7 @@ void entryPeriodic(void* argument)
   /* Infinite loop */
   for (;;)
   {
-    LedControl(thisNode.errCode, 3 * DELAY_MS, DELAY_MS);
+    LedControl(thisNode.errCode, thisNode.relayState, 3 * DELAY_MS, DELAY_MS);
     if (stateMachine == STATE_WAIT_FOR_MSG && ucGetLoraWorkingMode() != RXCONTINUOUS_MODE)
     {
       vModeInit(RXCONTINUOUS_MODE);
