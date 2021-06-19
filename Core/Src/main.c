@@ -57,7 +57,7 @@ NodeTypedef_t thisNode = {
   .location = THIS_NODE_LOCATION,
   .relayState = RELAY_STATE_OFF,
   .errCode = ERR_CODE_NONE,
-  .meshNodeID = MESH_NODE_ADDRESS,
+  .friendNodeID = FRIEND_NODE_ADDRESS,
 };
 
 IWDG_HandleTypeDef hiwdg;
@@ -89,7 +89,7 @@ void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 static void nodeInit();
-static void pwdOnNotif(reset_cause_t);
+static void pwdOnNotif();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -132,8 +132,7 @@ int main(void)
 //  vLoraInit();
   LED_OFF();
   vLoraInit(&LoraInit);
-  reset_cause_t resetCause = resetCauseGet();
-  STM_LOGI(MAIN_TAG, "Reset cause:  {%s}", resetCauseGetName(resetCause));
+  STM_LOGI(MAIN_TAG, "Reset cause:  {%s}", resetCauseGetName(resetCauseGet()));
 
   /* Retrieve old state from FLASH */
   nodeInit();
@@ -142,11 +141,11 @@ int main(void)
   STM_LOGI(MAIN_TAG, "Relay:      {%s}", WHICH_RELAY(thisNode.relayState));
   STM_LOGI(MAIN_TAG, "Location:   {%d}", thisNode.location);
   STM_LOGI(MAIN_TAG, "Error:      {%s}", WHICH_RELAY_ERR(thisNode.errCode));
-  STM_LOGI(MAIN_TAG, "MeshID:     {%d}", thisNode.meshNodeID);
+  STM_LOGI(MAIN_TAG, "FriendID:     {%d}", thisNode.friendNodeID);
   STM_LOGI(MAIN_TAG, "GatewayID:  {%d}", GATEWAY_ADDRESS);
 
   /* Send notif gw after power on */
-  pwdOnNotif(resetCause);
+  pwdOnNotif();
 
   /* Enable watchdog */
   STM_LOGI(MAIN_TAG, "Watchdog Init {%ums}", iwdgInit(&hiwdg, WATCHDOG_TIME));
@@ -224,7 +223,7 @@ static void nodeInit() {
     STM_LOGV(MAIN_TAG, "data not found, write relay data to flash");
     ERROR_CHECK(Flash_ErasePage(FLASH_ADDR_RELAY_STATE, 1));
     ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_NODE_ID, (uint32_t)thisNode.nodeID));
-    ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_MESH_NODE_ID, (uint32_t)thisNode.meshNodeID));
+    ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_FRIEND_NODE_ID, (uint32_t)thisNode.friendNodeID));
     ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_RELAY_STATE, (uint32_t)thisNode.relayState));
     ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_LOCATION, (uint32_t)thisNode.location));
     ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_ERROR_CODE, (uint32_t)thisNode.errCode));
@@ -239,11 +238,11 @@ static void nodeInit() {
       thisNode.nodeID = flashNodeID;
     }
 
-    uint8_t flashMeshNodeID = Flash_ReadAddress(FLASH_ADDR_MESH_NODE_ID);
-    if (thisNode.meshNodeID != flashMeshNodeID && flashMeshNodeID != 0xFF && flashMeshNodeID != thisNode.nodeID)
+    uint8_t flashFriendNodeID = Flash_ReadAddress(FLASH_ADDR_FRIEND_NODE_ID);
+    if (thisNode.friendNodeID != flashFriendNodeID && flashFriendNodeID != 0xFF && flashFriendNodeID != thisNode.nodeID)
     {
-      STM_LOGI(MAIN_TAG, "Mesh NodeID update: %d ---> %d", thisNode.meshNodeID, flashMeshNodeID);
-      thisNode.meshNodeID = flashMeshNodeID;
+      STM_LOGI(MAIN_TAG, "Friend NodeID update: %d ---> %d", thisNode.friendNodeID, flashFriendNodeID);
+      thisNode.friendNodeID = flashFriendNodeID;
     }
 
     thisNode.relayState = Flash_ReadAddress(FLASH_ADDR_RELAY_STATE);
@@ -253,10 +252,10 @@ static void nodeInit() {
   }
 }
 
-static void pwdOnNotif(reset_cause_t rstCause)
+static void pwdOnNotif()
 {
   uint8_t notifData[PAYLOAD_LENGTH];
-  PACK_NOTIF_MSG(notifData, thisNode, rstCause);
+  PACK_NOTIF_MSG(notifData, thisNode, TIME_TO_LIVE_DEFAULT);
   LoRaTransmit(notifData, PAYLOAD_LENGTH, LORA_DELAY);
 }
 
@@ -264,7 +263,7 @@ void updateDataToFlash(void)
 {
   taskENTER_CRITICAL();
   ERROR_CHECK(Flash_ErasePage(FLASH_ADDR_RELAY_STATE, 1));
-  ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_MESH_NODE_ID, (uint32_t)thisNode.meshNodeID));
+  ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_FRIEND_NODE_ID, (uint32_t)thisNode.friendNodeID));
   ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_RELAY_STATE, (uint32_t)thisNode.relayState));
   ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_LOCATION, (uint32_t)thisNode.location));
   ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_ERROR_CODE, (uint32_t)thisNode.errCode));

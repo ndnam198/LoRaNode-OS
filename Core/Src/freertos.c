@@ -100,7 +100,7 @@ static void opcodeInquiry(uint8_t seqID);
 static void opcodeRelayControl(uint8_t newState, uint8_t seqID);
 static void opcodeMcuReset(void);
 static void opcodeLocationUpdate(uint8_t newLocation, uint8_t seqID);
-static void opcodeMeshNodeIdUpdate(uint8_t newMeshNodeID, uint8_t seqID);
+static void opcodeFriendNodeIdUpdate(uint8_t newFriendNodeID, uint8_t seqID);
 
 static void stateChange(StateMachineTypeDef_t newState, int caller);
 /* USER CODE END FunctionPrototypes */
@@ -266,9 +266,18 @@ void entryProducer(void* argument)
             STM_LOGW(PRODUCER_TAG, "Msg type not valid: {%s}", WHICH_MSG_TYPE(receivedMsg[INDEX_MSG_TYPE]));
           }
         }
-        else if (thisNode.meshNodeID != UNUSED_ADDRESS
-          && (receivedMsg[INDEX_DEST_ID] == thisNode.meshNodeID || receivedMsg[INDEX_SOURCE_ID] == thisNode.meshNodeID))
+        else if (thisNode.friendNodeID != UNUSED_ADDRESS
+          && (receivedMsg[INDEX_DEST_ID] == thisNode.friendNodeID || receivedMsg[INDEX_SOURCE_ID] == thisNode.friendNodeID))
         {
+          STM_LOGD(PRODUCER_TAG, "Forward friend node msg");
+          receivedMsg[INDEX_TIME_TO_LIVE] = TIME_TO_LIVE_NONE;
+          LoRaTransmit(receivedMsg, PAYLOAD_LENGTH, LORA_DELAY);
+          stateChange(STATE_WAIT_FOR_MSG, __LINE__);
+        }
+        else if (receivedMsg[INDEX_DEST_ID] != thisNode.nodeID && receivedMsg[INDEX_TIME_TO_LIVE] > TIME_TO_LIVE_NONE && receivedMsg[INDEX_TIME_TO_LIVE] <= TIME_TO_LIVE_MAX)
+        {
+          STM_LOGD(PRODUCER_TAG, "Relay msg, TTL: %d", receivedMsg[INDEX_TIME_TO_LIVE]);
+          receivedMsg[INDEX_TIME_TO_LIVE]--;
           LoRaTransmit(receivedMsg, PAYLOAD_LENGTH, LORA_DELAY);
           stateChange(STATE_WAIT_FOR_MSG, __LINE__);
         }
@@ -319,8 +328,8 @@ void entryConsumer(void* argument)
       case OPCODE_REQUEST_LOCATION_UPDATE:
         opcodeLocationUpdate(receivedMsgFromQueue[INDEX_DATA_LOCATION], receivedMsgFromQueue[INDEX_SEQUENCE_ID]);
         break;
-      case OPCODE_REQUEST_MESH_NODE_ID_UPDATE:
-        opcodeMeshNodeIdUpdate(receivedMsgFromQueue[INDEX_DATA_MESH_NODE_ID], receivedMsgFromQueue[INDEX_SEQUENCE_ID]);
+      case OPCODE_REQUEST_FRIEND_NODE_ID_UPDATE:
+        opcodeFriendNodeIdUpdate(receivedMsgFromQueue[INDEX_DATA_FRIEND_NODE_ID], receivedMsgFromQueue[INDEX_SEQUENCE_ID]);
         break;
       default:
         STM_LOGW(CONSUMER_TAG, "Opcode not found %d", receivedMsgFromQueue[INDEX_COMMAND_OPCODE]);
@@ -366,7 +375,7 @@ void entryPeriodic(void* argument)
 static void opcodeInquiry(uint8_t seqID)
 {
   uint8_t msg[PAYLOAD_LENGTH];
-  PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_STATE);
+  PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_STATE, TIME_TO_LIVE_DEFAULT);
   LoRaTransmit(msg, PAYLOAD_LENGTH, LORA_DELAY);
 }
 
@@ -416,10 +425,10 @@ static void opcodeRelayControl(uint8_t newState, uint8_t seqID)
   }
 
   if (isAck) {
-    PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_RELAY_CONTROL);
+    PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_RELAY_CONTROL, TIME_TO_LIVE_DEFAULT);
   }
   else {
-    PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_FAILED, seqID, OPCODE_RESPOSNE_RELAY_CONTROL);
+    PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_FAILED, seqID, OPCODE_RESPOSNE_RELAY_CONTROL, TIME_TO_LIVE_DEFAULT);
   }
   LoRaTransmit(msg, PAYLOAD_LENGTH, LORA_DELAY);
 }
@@ -437,24 +446,24 @@ static void opcodeLocationUpdate(uint8_t newLocation, uint8_t seqID)
   {
     thisNode.location = newLocation;
     STM_LOGI(CONSUMER_TAG, "----> Update location %d", newLocation);
-    PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_LOCATION_UPDATE);
+    PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_LOCATION_UPDATE, TIME_TO_LIVE_DEFAULT);
   }
   else
   {
     STM_LOGW(CONSUMER_TAG, "Invalid data %d", newLocation);
-    PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_FAILED, seqID, OPCODE_RESPOSNE_LOCATION_UPDATE);
+    PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_FAILED, seqID, OPCODE_RESPOSNE_LOCATION_UPDATE, TIME_TO_LIVE_DEFAULT);
   }
   LoRaTransmit(msg, PAYLOAD_LENGTH, LORA_DELAY);
 }
 
-static void opcodeMeshNodeIdUpdate(uint8_t newMeshNodeID, uint8_t seqID)
+static void opcodeFriendNodeIdUpdate(uint8_t newFriendNodeID, uint8_t seqID)
 {
   uint8_t msg[PAYLOAD_LENGTH];
-  if (thisNode.meshNodeID != newMeshNodeID && thisNode.nodeID != newMeshNodeID)
+  if (thisNode.friendNodeID != newFriendNodeID && thisNode.nodeID != newFriendNodeID)
   {
-    thisNode.meshNodeID = newMeshNodeID;
+    thisNode.friendNodeID = newFriendNodeID;
   }
-  PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_MESH_NODE_ID_UPDATE);
+  PACK_RESPONSE_MSG(msg, thisNode, MSG_STS_OK, seqID, OPCODE_RESPOSNE_FRIEND_NODE_ID_UPDATE, TIME_TO_LIVE_DEFAULT);
   LoRaTransmit(msg, PAYLOAD_LENGTH, LORA_DELAY);
 }
 

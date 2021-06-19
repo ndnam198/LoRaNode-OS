@@ -32,16 +32,17 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#define TIME_TO_LIVE_DEFAULT  TIME_TO_LIVE_NONE
 #define NB_OF_RELAY_CHECK  (50u)
 #define FLASH_ADDR_NODE_ID       ADDR_FLASH_PAGE_60
-#define FLASH_ADDR_MESH_NODE_ID  ADDR_FLASH_PAGE_60+4
+#define FLASH_ADDR_FRIEND_NODE_ID  ADDR_FLASH_PAGE_60+4
 #define FLASH_ADDR_RELAY_STATE   ADDR_FLASH_PAGE_60+8
 #define FLASH_ADDR_LOCATION      ADDR_FLASH_PAGE_60+12
 #define FLASH_ADDR_ERROR_CODE    ADDR_FLASH_PAGE_60+16
-/* USER CODE END Includes */
+    /* USER CODE END Includes */
 
-/* Exported types ------------------------------------------------------------*/
-/* USER CODE BEGIN ET */
+    /* Exported types ------------------------------------------------------------*/
+    /* USER CODE BEGIN ET */
   typedef enum
   {
     STATE_WAIT_FOR_MSG,
