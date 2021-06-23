@@ -268,7 +268,7 @@ void updateDataToFlash(void)
   ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_LOCATION, (uint32_t)thisNode.location));
   ERROR_CHECK(Flash_WriteWord(FLASH_ADDR_ERROR_CODE, (uint32_t)thisNode.errCode));
   taskEXIT_CRITICAL();
-  STM_LOGV(MAIN_TAG, "update data to flash");
+  STM_LOGD(MAIN_TAG, "update data to flash");
 }
 
 /* USER CODE END 4 */

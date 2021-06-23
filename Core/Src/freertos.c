@@ -274,7 +274,7 @@ void entryProducer(void* argument)
           LoRaTransmit(receivedMsg, PAYLOAD_LENGTH, LORA_DELAY);
           stateChange(STATE_WAIT_FOR_MSG, __LINE__);
         }
-        else if (receivedMsg[INDEX_DEST_ID] != thisNode.nodeID && receivedMsg[INDEX_TIME_TO_LIVE] > TIME_TO_LIVE_NONE && receivedMsg[INDEX_TIME_TO_LIVE] <= TIME_TO_LIVE_MAX)
+        else if (receivedMsg[INDEX_SOURCE_ID] != thisNode.nodeID && receivedMsg[INDEX_DEST_ID] != thisNode.nodeID && receivedMsg[INDEX_TIME_TO_LIVE] > TIME_TO_LIVE_NONE && receivedMsg[INDEX_TIME_TO_LIVE] <= TIME_TO_LIVE_MAX)
         {
           STM_LOGD(PRODUCER_TAG, "Relay msg, TTL: %d", receivedMsg[INDEX_TIME_TO_LIVE]);
           receivedMsg[INDEX_TIME_TO_LIVE]--;
@@ -283,7 +283,7 @@ void entryProducer(void* argument)
         }
         else
         {
-          STM_LOGV(PRODUCER_TAG, "not matched ---> ignore");
+          STM_LOGD(PRODUCER_TAG, "not matched ---> ignore");
           stateChange(STATE_WAIT_FOR_MSG, __LINE__);
         }
       }
@@ -469,7 +469,7 @@ static void opcodeFriendNodeIdUpdate(uint8_t newFriendNodeID, uint8_t seqID)
 
 static void stateChange(StateMachineTypeDef_t newState, int caller)
 {
-  STM_LOGI("STATE MACHINE", "CALLER: %d - {%s} to {%s}",
+  STM_LOGD("STATE MACHINE", "CALLER: %d - {%s} to {%s}",
     caller,
     WHICH_STATE(stateMachine),
     WHICH_STATE(newState));
